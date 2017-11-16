@@ -2,11 +2,11 @@
   TypeFamilies, FlexibleContexts
 #-}
 
-module Server where
+module Main where
 
 import Network
 import System.IO
 
+-- Main entry point for server.
 main :: IO ()
 main = undefined
-
