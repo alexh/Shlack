@@ -1,6 +1,5 @@
 {-# LANGUAGE
-  TypeFamilies
-, FlexibleContexts
+  TypeFamilies, FlexibleContexts
 #-}
 
 module ServerTesting where
