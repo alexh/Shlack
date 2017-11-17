@@ -9,12 +9,15 @@ import System.IO
 
 import Model
 
-parseInput :: String -> Either Message Command
+-- Parses user input into a Message.
+parseInput :: String -> Message
 parseInput = undefined
 
+-- Serializes messages into a friendly intermediate format to send to server.
 serializeMessage :: Message -> String
 serializeMessage = undefined
 
+-- Serializes commands into a friendly intermediate format to send to server.
 serializeCommand :: Command -> String
 serializeCommand = undefined
 
