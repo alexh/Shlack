@@ -8,11 +8,14 @@ import Network.Socket
 import System.IO
 import Model
 
-parseInput :: String -> Message
+parseInput :: String -> Either Message Command
 parseInput = undefined
 
 serializeMessage :: Message -> String
 serializeMessage = undefined
+
+serializeCommand :: Command -> String
+serializeCommand = undefined
 
 -- | IP address of the local host
 local :: HostName

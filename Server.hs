@@ -10,12 +10,9 @@ import System.IO
 import Model
 
 -- State of the server. Polymorphic in the type of the socket.
-data ServerStateSocket s = ServerState {
+data ServerState s = ServerState {
   connectedUsers :: M.Map s Int
 }
-
--- Concrete server state type.
-newtype ServerState = ServerStateSocket Socket
 
 -- Parses String recieved from Socket into a Message
 parseMessage :: String -> Message

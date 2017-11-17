@@ -13,9 +13,6 @@ import Server
 newtype AbstractSocket =
   AbstractSocket { getAbstractSocket :: Int }
 
--- Concrete type for testing.
-newtype ServerState = ServerStateSocket AbstractSocket
-
 -- Monadic actions for testing sockets.
 class MonadSocket m where
   readFrom :: AbstractSocket -> m Message
