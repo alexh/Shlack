@@ -4,9 +4,9 @@
 
 module Main where
 
-import Network
+import Network.Socket
 import System.IO
 
--- Main entry point for server.
+-- Main entry point for client.
 main :: IO ()
 main = undefined
