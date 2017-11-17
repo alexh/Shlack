@@ -6,21 +6,20 @@ module ServerTesting where
 
 import qualified Data.Map as M
 import Control.Monad.State as S
+import Model
+import Server
 
-data Message = JoinRoom Int
-             | TextData String
-             | Disconnect
-
+-- Abstract socket type for testing.
 newtype AbstractSocket =
   AbstractSocket { getAbstractSocket :: Int }
 
+-- Concrete type for testing.
+newtype ServerState = ServerStateSocket AbstractSocket
+
+-- Monadic actions for testing sockets.
 class MonadSocket m where
   readFrom :: AbstractSocket -> m Message
   sendTo :: AbstractSocket -> Message -> m ()
-
-data ServerState = ServerState {
-  connectedUsers :: M.Map AbstractSocket Int
-  }
 
 serverIter :: (MonadSocket m, MonadState ServerState m)
            => AbstractSocket
