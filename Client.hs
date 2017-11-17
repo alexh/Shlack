@@ -6,6 +6,8 @@ module Client where
 
 import Network.Socket
 import System.IO
+import Test.HUnit
+
 import Model
 
 parseInput :: String -> Either Message Command
@@ -36,3 +38,8 @@ client = undefined
         --  Parse stdin
         --  Serialize message
         --- Send message over socket
+
+testSerializeMessage :: Test
+testSerializeMessage = TestList [
+    serializeMessage (JoinRoom 1) ~?= "Join,1",
+    serializeMessage (JoinRoom 232) ~?= "Join,232"]
