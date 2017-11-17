@@ -1,6 +1,10 @@
 import Test.HUnit
 import Client
 
+testParseInput :: Test
+testParseInput = TestList [
+    ]
+
 testSerializeMessage :: Test
 testSerializeMessage = TestList [
     serializeMessage (JoinRoom 1) ~?= "Join,1",
