@@ -23,6 +23,15 @@ clientMain = undefined
 --  Serialize message
 --- Send message over socket
 
+-- | IP address of the local host
+local :: HostName
+local = undefined
+
+-- | Start the client given an IP address and a port. The port should
+-- be a string number > 1024
+client :: HostName -> ServiceName -> IO Handle
+client = undefined
+
 -- Main entry point for client.
 -- main :: IO ()
 -- main = undefined
