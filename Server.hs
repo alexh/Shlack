@@ -32,13 +32,13 @@ parseMessage :: String -> Message
 parseMessage = undefined
 
 -- Evaluate a message sent by this client and update the state.
--- TODO this function may have side effects? Like printing out to user?
-evaluateMessage :: UserName -> Message -> ServerState s -> ServerState s
+-- Has a side effect of writing out to clients the data associated with the message.
+evaluateMessage :: MonadSocket m Socket => UserName -> Message -> ServerState s -> m (ServerState s)
 evaluateMessage = undefined
 
 -- Evaluate a command sent by this client and update the state.
--- TODO this function also must print to user?
-evaluateCommand :: UserName -> Command -> ServerState s -> ServerState s
+-- Has a side effect of writing out to clients the data associated with the command.
+evaluateCommand :: MonadSocket m Socket => UserName -> Command -> ServerState s -> m (ServerState s)
 evaluateCommand = undefined
 
 -- Send a message to an entire channel.
