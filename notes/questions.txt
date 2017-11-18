@@ -1,0 +1,2 @@
+(* Checkpoint 1 Questions *)
+-How do we make two mains (client/server)? Can we have types at the root directory and then share them between the client/server directories?
