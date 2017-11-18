@@ -16,7 +16,7 @@ data AbstractSocket =
                    getSocketData :: String }
 
 -- Inject new data into the socket for testing.
-injectSocketData :: String -> AbstractSocket
+injectSocketData :: AbstractSocket -> String -> AbstractSocket
 injectSocketData = undefined
 
 instance MonadSocket Maybe AbstractSocket where
