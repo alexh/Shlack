@@ -18,12 +18,14 @@ type Channel = String
 data Message = TextData String
              | LogIn UserName
              | Cmd Command
+    deriving (Show, Eq)
 
 -- Type of slash commands (e.g. /whisper).
 -- Slash commands are the main mechanism for non-chat interaction with the server.
 data Command = JoinChannel Channel
-             | Whisper UserName
+             | Whisper UserName String
              | Ignore UserName
              | ListChannels
              | Help
              | Disconnect
+ deriving (Show, Eq)

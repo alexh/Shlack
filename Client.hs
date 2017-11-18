@@ -10,7 +10,7 @@ import System.IO
 import Model
 
 -- Parses user input into a Message.
-parseInput :: String -> Message
+parseInput :: String -> Maybe Message
 parseInput = undefined
 
 -- Serializes messages into a friendly intermediate format to send to server.
