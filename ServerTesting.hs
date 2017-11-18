@@ -68,3 +68,4 @@ testParseMessage = TestList [
     parseMessage "Help" ~?= Cmd Help,
     parseMessage "Ignore,alex" ~?= Cmd (Ignore "alex"),
     parseMessage "Whisper,alex,hey dad" ~?= Cmd (Whisper "alex" "hey dad")]
+    
