@@ -29,3 +29,4 @@ data Command = JoinChannel Channel
              | Help
              | Disconnect
  deriving (Show, Eq)
+ 
