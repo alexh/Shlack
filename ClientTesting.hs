@@ -8,6 +8,7 @@ import Test.HUnit
 import Model
 import Client
 
+-- Mini test suite for the parseInput function.
 testParseInput :: Test
 testParseInput = TestList [
     parseInput "This is a message\n" ~?=
@@ -22,11 +23,12 @@ testParseInput = TestList [
     parseInput "/help\n" ~?= Just (Cmd Help),
     parseInput "/help garbage extra text\n" ~?= Nothing]
 
+-- Mini test suite for the serializeMessage function.
 testSerializeMessage :: Test
 testSerializeMessage = TestList [
     serializeMessage (Cmd $ JoinChannel "channel1") ~?= "Join,channel1",
     serializeMessage (TextData "pizza") ~?= "Message,pizza",
-    serializeMessage (LogIn "alex") ~?= "Login,alex",
+    serializeMessage (Login "alex") ~?= "Login,alex",
     serializeMessage (Cmd Disconnect) ~?= "Disconnect",
     serializeMessage (Cmd ListChannels) ~?= "ListChannels",
     serializeMessage (Cmd Help) ~?= "Help",

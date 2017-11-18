@@ -16,7 +16,7 @@ type Channel = String
 
 -- Type of messages. Represents any client/server interaction.
 data Message = TextData String
-             | LogIn UserName
+             | Login UserName
              | Cmd Command
     deriving (Show, Eq)
 
