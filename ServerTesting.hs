@@ -10,11 +10,6 @@ import Test.HUnit
 import Model
 import Server
 
--- Abstract socket type for testing.
-data AbstractSocket =
-  AbstractSocket { getAbstractSocket :: Int,
-                   getSocketData :: String }
-
 -- Inject new data into the socket for testing.
 injectSocketData :: AbstractSocket -> String -> AbstractSocket
 injectSocketData = undefined
@@ -56,6 +51,10 @@ serverIter sock = do
         Disconnect ->
           -- Remove the user from their channel and close the client.
           return ()
+
+-- Example of a test suite for server actions.
+testServer :: Test
+testServer = TestList []
 
 -- Mini test suite for the parseMessage function.
 testParseMessage :: Test

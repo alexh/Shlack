@@ -1,28 +1,38 @@
 {-# LANGUAGE
-  TypeFamilies, FlexibleContexts, MultiParamTypeClasses
+  TypeFamilies, FlexibleContexts, MultiParamTypeClasses, GADTs
 #-}
 
 module Server where
 
 import qualified Data.Map as M
-import Network.Socket
+import Network
 import System.IO
 import Model
 
--- State of the server. Polymorphic in the type of the socket for testing.
+-- A socket type for either real usage or testing.
+data Socket s where
+    NetSocket :: Server.Socket Network.Socket
+    AbsSocket :: Server.Socket AbstractSocket
+
+-- And here is the abstract socket type for testing.
+data AbstractSocket =
+  AbstractSocket { getAbstractSocket :: Int,
+                   getSocketData :: String }
+
+-- State of the server. Boundedly polymorphic in the type of the socket for testing.
 data ServerState s = ServerState {
-  connectedUsers :: M.Map s UserName,
+  connectedUsers :: M.Map (Server.Socket s) UserName,
   channels :: M.Map Channel [UserName],
   ignoredUsers :: M.Map UserName [UserName]
 }
 
--- Monadic actions for interacting with sockets. Polymorphic in type of socket.
+-- Monadic actions for interacting with sockets. Boundedly polymorphic in type of socket.
 class Monad m => MonadSocket m s where
-  readFrom :: s -> m Message
-  sendTo :: s -> Message -> m ()
+  readFrom :: Server.Socket s -> m Message
+  sendTo :: Server.Socket s -> Message -> m ()
 
 -- Concrete MonadSocket instance for actual server.
-instance MonadSocket IO Socket where
+instance MonadSocket IO (Server.Socket s) where
     readFrom = undefined
     sendTo = undefined
 
@@ -33,16 +43,16 @@ parseMessage = undefined
 
 -- Evaluate a message sent by this client and update the state.
 -- Has a side effect of writing out to clients the data associated with the message.
-evaluateMessage :: MonadSocket m Socket => UserName -> Message -> ServerState s -> m (ServerState s)
+evaluateMessage :: MonadSocket m (Server.Socket s) => UserName -> Message -> ServerState s -> m (ServerState s)
 evaluateMessage = undefined
 
 -- Evaluate a command sent by this client and update the state.
 -- Has a side effect of writing out to clients the data associated with the command.
-evaluateCommand :: MonadSocket m Socket => UserName -> Command -> ServerState s -> m (ServerState s)
+evaluateCommand :: MonadSocket m (Server.Socket s) => UserName -> Command -> ServerState s -> m (ServerState s)
 evaluateCommand = undefined
 
 -- Send a message to an entire channel.
-sendToChannel :: MonadSocket m Socket => String -> Channel -> m ()
+sendToChannel :: MonadSocket m (Server.Socket s) => String -> Channel -> m ()
 sendToChannel = undefined
 
 -- Main entry point for server.
