@@ -1,5 +1,5 @@
 {-# LANGUAGE
-  TypeFamilies, FlexibleContexts
+  TypeFamilies, FlexibleContexts, MultiParamTypeClasses
 #-}
 
 module Server where
@@ -15,6 +15,16 @@ data ServerState s = ServerState {
   channels :: M.Map Channel [UserName],
   ignoredUsers :: M.Map UserName [UserName]
 }
+
+-- Monadic actions for interacting with sockets. Polymorphic in type of socket.
+class Monad m => MonadSocket m s where
+  readFrom :: s -> m Message
+  sendTo :: s -> Message -> m ()
+
+-- Concrete MonadSocket instance for actual server.
+instance MonadSocket IO Socket where
+    readFrom = undefined
+    sendTo = undefined
 
 -- Parses String received from Client into a Message.
 -- String has a friendly intermediate format.
@@ -32,7 +42,7 @@ evaluateCommand :: UserName -> Command -> ServerState s -> ServerState s
 evaluateCommand = undefined
 
 -- Send a message to an entire channel.
-sendToChannel :: String -> Channel -> IO ()
+sendToChannel :: MonadSocket m Socket => String -> Channel -> m ()
 sendToChannel = undefined
 
 -- Main entry point for server.

@@ -14,11 +14,6 @@ import Server
 newtype AbstractSocket =
   AbstractSocket { getAbstractSocket :: Int }
 
--- Monadic actions for testing sockets.
-class MonadSocket m where
-  readFrom :: AbstractSocket -> m Message
-  sendTo :: AbstractSocket -> Message -> m ()
-
 serverIter :: (MonadSocket m, MonadState (ServerState AbstractSocket) m)
            => AbstractSocket
            -> m ()
