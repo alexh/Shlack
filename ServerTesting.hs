@@ -53,6 +53,7 @@ serverIter sock = do
           return ()
 
 -- Example of a test suite for server actions.
+-- TODO, how do you use do notation in a unit test?
 testServer :: Test
 testServer = TestList []
 
