@@ -1,5 +1,5 @@
 {-# LANGUAGE
-  TypeFamilies, FlexibleContexts
+  TypeFamilies, FlexibleContexts, MultiParamTypeClasses
 #-}
 
 module ServerTesting where
@@ -11,10 +11,16 @@ import Model
 import Server
 
 -- Abstract socket type for testing.
-newtype AbstractSocket =
-  AbstractSocket { getAbstractSocket :: Int }
+data AbstractSocket =
+  AbstractSocket { getAbstractSocket :: Int,
+                   getSocketData :: String }
 
-serverIter :: (MonadSocket m, MonadState (ServerState AbstractSocket) m)
+instance MonadSocket Maybe AbstractSocket where
+  readFrom s = Just (TextData (getSocketData s))
+  sendTo s m = Just ()
+
+
+serverIter :: (MonadSocket m AbstractSocket, MonadState (ServerState AbstractSocket) m)
            => AbstractSocket
            -> m ()
 serverIter sock = do
