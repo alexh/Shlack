@@ -12,7 +12,8 @@ import Model
 -- State of the server. Polymorphic in the type of the socket for testing.
 data ServerState s = ServerState {
   connectedUsers :: M.Map s UserName,
-  channels :: M.Map Channel [UserName]
+  channels :: M.Map Channel [UserName],
+  ignoredUsers :: M.Map UserName [UserName]
 }
 
 -- Parses String received from Client into a Message.

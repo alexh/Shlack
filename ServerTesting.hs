@@ -26,14 +26,32 @@ serverIter sock = do
   msg <- readFrom sock
   case msg of
     TextData s ->
-      -- TODO document
+      -- Send the message to all sockets with connected users in this channel.
       return ()
     Login u ->
-      -- TODO document
+      -- Add the user to the chat platform. User should start in a default "general" channel.
       return ()
     Cmd c ->
-      -- TODO document
-      return ()
+      -- Note that the sender of messages will be identified by the socket they are connected to.
+      case c of
+        JoinChannel ch ->
+          -- Remove the user from their current channel and put them in the new channel.
+          return ()
+        Whisper name str ->
+          -- Send this message privately to the destination user.
+          return ()
+        Ignore name ->
+          -- Mark that all messages sent by this user should not be seen by the sender.
+          return ()
+        ListChannels ->
+          -- Output all channels to sender.
+          return ()
+        Help ->
+          -- Output helpful information to the sender about how to use the platform.
+          return ()
+        Disconnect ->
+          -- Remove the user from their channel and close the client.
+          return ()
 
 -- Mini test suite for the parseMessage function.
 testParseMessage :: Test
