@@ -1,3 +1,7 @@
+{-# LANGUAGE
+  TypeFamilies, FlexibleContexts
+#-}
+
 import Test.HUnit
 import Client
 

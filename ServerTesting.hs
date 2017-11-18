@@ -33,3 +33,5 @@ serverIter sock = do
       {- Remove the user from the connected user map -}
       return ()
 
+testParseMessage :: Test
+testParseMessage = TestList []
