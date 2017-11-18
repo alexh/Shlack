@@ -15,10 +15,13 @@ data AbstractSocket =
   AbstractSocket { getAbstractSocket :: Int,
                    getSocketData :: String }
 
+-- Inject new data into the socket for testing.
+injectSocketData :: String -> AbstractSocket
+injectSocketData = undefined
+
 instance MonadSocket Maybe AbstractSocket where
   readFrom s = Just (TextData (getSocketData s))
-  sendTo s m = Just ()
-
+  sendTo s m = Just () -- succeed silently
 
 serverIter :: (MonadSocket m AbstractSocket, MonadState (ServerState AbstractSocket) m)
            => AbstractSocket
