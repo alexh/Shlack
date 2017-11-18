@@ -1,11 +1,12 @@
 {-# LANGUAGE
-  TypeFamilies, FlexibleContexts, MultiParamTypeClasses, GADTs
+  TypeFamilies, FlexibleContexts, MultiParamTypeClasses, GADTs, FlexibleInstances, ScopedTypeVariables
 #-}
 
 module Server where
 
 import qualified Data.Map as M
 import Network
+import Data.Proxy
 import System.IO
 import Model
 
@@ -32,7 +33,7 @@ class Monad m => MonadSocket m s where
   sendTo :: Server.Socket s -> Message -> m ()
 
 -- Concrete MonadSocket instance for actual server.
-instance MonadSocket IO (Server.Socket s) where
+instance MonadSocket IO (Server.Socket Network.Socket) where
     readFrom = undefined
     sendTo = undefined
 
@@ -43,16 +44,19 @@ parseMessage = undefined
 
 -- Evaluate a message sent by this client and update the state.
 -- Has a side effect of writing out to clients the data associated with the message.
+-- TODO: Add a constraint like MonadState (ServerState Network.Socket) m here
 evaluateMessage :: MonadSocket m (Server.Socket s) => UserName -> Message -> ServerState s -> m (ServerState s)
 evaluateMessage = undefined
 
 -- Evaluate a command sent by this client and update the state.
 -- Has a side effect of writing out to clients the data associated with the command.
+-- TODO: Add a constraint like MonadState (ServerState Network.Socket) m here
 evaluateCommand :: MonadSocket m (Server.Socket s) => UserName -> Command -> ServerState s -> m (ServerState s)
 evaluateCommand = undefined
 
 -- Send a message to an entire channel.
-sendToChannel :: MonadSocket m (Server.Socket s) => String -> Channel -> m ()
+-- TODO: Add a constraint like MonadState (ServerState Network.Socket) m here
+sendToChannel :: MonadSocket m (Server.Socket s) => Proxy s -> String -> Channel -> m ()
 sendToChannel = undefined
 
 -- Main entry point for server.

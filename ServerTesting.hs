@@ -14,10 +14,12 @@ import Server
 injectSocketData :: AbstractSocket -> String -> AbstractSocket
 injectSocketData = undefined
 
+-- TODO: Use state monad for the monad in this instance.
 instance MonadSocket Maybe AbstractSocket where
   readFrom s = Just (TextData (getSocketData s))
   sendTo s m = Just () -- succeed silently
 
+-- TODO: remove this potentially? Use the evaluation functions from Server instead
 serverIter :: (MonadSocket m AbstractSocket, MonadState (ServerState AbstractSocket) m)
            => AbstractSocket
            -> m ()
@@ -54,6 +56,8 @@ serverIter sock = do
 
 -- Example of a test suite for server actions.
 -- TODO, how do you use do notation in a unit test?
+  -- Define a runTestingServer to run our monadic action (the stateful socket one)
+  -- Use runStateT
 testServer :: Test
 testServer = TestList []
 
