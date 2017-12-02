@@ -38,6 +38,7 @@ client = undefined
 -- main = undefined
     -- Open socket to Server
     -- Loop:
+        -- TODO make this double-threaded (using MVars)
         --  Read from socket
         --  Read from stdin
         --  Parse stdin

@@ -4,3 +4,4 @@
 -Should the client be tested with mock connections as well?
 -Are we using the MonadSocket in the right way (esp. in the type constraint for functions?)
 -Should the ServerState be a state monad? How would that look? What are the trade offs?
+-Why doesn't sendToChannel compile?
