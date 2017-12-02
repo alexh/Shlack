@@ -12,6 +12,8 @@ import Network.Socket hiding (send, sendTo, recv, recvFrom)
 import Network.Socket.ByteString
 import Control.Monad.State.Class
 import Data.Proxy
+import Data.List.Split
+import System.IO
 import Model
 
 -- A socket type for either real usage or testing.
@@ -57,7 +59,15 @@ getNetSocket _ = undefined -- todo?
 -- Parses String received from Client into a Message.
 -- String has a friendly intermediate format.
 parseMessage :: String -> Message
-parseMessage = TextData -- TODO, implement this
+parseMessage str =
+  let parts = splitOn "," str in
+  case parts of
+    p1 : p2 : [] -> case p1 of
+      "Message" -> TextData p2
+      "Login" -> Login p2
+      _ -> TextData "parse error"
+    _ -> TextData "parse error"
+
 
 -- Evaluate a message sent by this client and update the state.
 -- Has a side effect of writing out to clients the data associated with the message.
