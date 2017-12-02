@@ -5,15 +5,37 @@
 module Client where
 
 import Network
-import Network.Socket
 import Control.Concurrent
+import Data.List.Split
 import System.IO
 
 import Model
 
 -- Parses user input into a Message.
-parseInput :: String -> IO (Maybe Message)
-parseInput str = return $ Just $ TextData str
+parseInput :: String -> Maybe Message
+-- parseInput str = return $ Just $ TextData str
+parseInput str =
+    if length str == 0 then Nothing else
+    let msg = take (length str -1) str in
+    let parts = splitOn " " msg in
+    case parts of
+        "/whisper" : p2 : rest -> Just $ Cmd $ Whisper p2 (unwords rest)
+        p : [] -> case p of
+            '/' : cmd -> case cmd of
+                "listchannels" -> Just $ Cmd $ ListChannels
+                "help" -> Just $ Cmd $ Help
+                "disconnect" -> Just $ Cmd $ Disconnect
+                _ -> Nothing
+            text -> Just $ TextData text
+        p : ps ->
+            case p of
+                '/' : cmd -> case cmd of
+                    "join" -> Just $ Cmd $ JoinChannel (concat ps)
+                    "ignore" -> Just $ Cmd $ Ignore(concat ps)
+                    _ -> Nothing
+                _ -> Just $ TextData msg
+        _ -> Nothing
+
     -- Use applicative parsing similar to HW06
 
 -- Serializes messages into a friendly intermediate format to send to server.
@@ -45,7 +67,7 @@ client = connectTo
 clientLoop :: Handle -> IO ()
 clientLoop sock = do
     input <- getLine
-    maybeMsg <- parseInput input
+    maybeMsg <- return $ parseInput input
     case maybeMsg of
         Just msg -> 
             let serialMsg = serializeMessage msg in
