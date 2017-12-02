@@ -5,15 +5,21 @@
 module Server where
 
 import qualified Data.Map as M
-import Network
+import qualified Data.ByteString.Char8 as C
+import Control.Concurrent
+import Control.Concurrent.Chan
+import Network hiding (send, sendTo, recv, recvFrom)
+import Network.Socket hiding (send, sendTo, recv, recvFrom)
+import Network.Socket.ByteString
+import Control.Monad.State.Class
 import Data.Proxy
 import System.IO
 import Model
 
 -- A socket type for either real usage or testing.
 data Socket s where
-    NetSocket :: Server.Socket Network.Socket
-    AbsSocket :: Server.Socket AbstractSocket
+    NetSocket :: Network.Socket -> Server.Socket Network.Socket
+    AbsSocket :: AbstractSocket -> Server.Socket AbstractSocket
 
 -- And here is the abstract socket type for testing.
 data AbstractSocket =
@@ -22,7 +28,7 @@ data AbstractSocket =
 
 -- State of the server. Boundedly polymorphic in the type of the socket for testing.
 data ServerState s = ServerState {
-  connectedUsers :: M.Map (Server.Socket s) UserName,
+  connectedUsers :: M.Map UserName (Server.Socket s),
   channels :: M.Map Channel [UserName],
   ignoredUsers :: M.Map UserName [UserName]
 }
@@ -33,14 +39,22 @@ class Monad m => MonadSocket m s where
   sendTo :: Server.Socket s -> Message -> m ()
 
 -- Concrete MonadSocket instance for actual server.
-instance MonadSocket IO (Server.Socket Network.Socket) where
-    readFrom = undefined
+instance MonadSocket IO Network.Socket where
+    readFrom s' = 
+      let s = getNetSocket s' in
+      do
+        byteData <- recv s 1024
+        return (parseMessage (C.unpack byteData))
     sendTo = undefined
+
+getNetSocket :: Server.Socket s -> Network.Socket
+getNetSocket (NetSocket s) = s
+getNetSocket _ = undefined -- todo?
 
 -- Parses String received from Client into a Message.
 -- String has a friendly intermediate format.
 parseMessage :: String -> Message
-parseMessage = undefined
+parseMessage = TextData -- TODO, implement this
 
 -- Evaluate a message sent by this client and update the state.
 -- Has a side effect of writing out to clients the data associated with the message.
@@ -59,9 +73,27 @@ evaluateCommand = undefined
 sendToChannel :: MonadSocket m (Server.Socket s) => Proxy s -> String -> Channel -> m ()
 sendToChannel = undefined
 
+readLoop :: Network.Socket -> IO ()
+readLoop s = do
+    msg <- readFrom (NetSocket s)
+    putStrLn ("ack: " ++ (show msg))
+    readLoop s
+
+mainLoop :: Network.Socket -> IO ()
+mainLoop s = do
+  (s', _) <- Network.Socket.accept s
+  _ <- forkIO (readLoop s')
+  mainLoop s
+
 -- Main entry point for server.
--- main :: IO ()
--- main = undefined
+main :: IO ()
+main = do
+  s <- socket AF_INET Stream defaultProtocol
+  setSocketOption s ReuseAddr 1
+  bind s (SockAddrInet 4040 iNADDR_ANY)
+  listen s 4
+  mainLoop s
+
 -- Open sockets with Clients.
     -- Loop:
         --  Read from socket
