@@ -116,6 +116,9 @@ readLoop st s = do
 -- Repeatedly accept connections and fork a new thread to read from them.
 mainLoop :: ServerState Network.Socket -> Network.Socket -> IO ()
 mainLoop st s = do
+  -- TODO, figure out how to share state between threads (so we can
+  -- update the socket maps.
+  -- Related TODO, make the ServerState be a monadic state so our lives are easier
   (s', _) <- Network.Socket.accept s
   _ <- forkIO (readLoop st s')
   mainLoop st s
