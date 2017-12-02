@@ -4,25 +4,34 @@
 
 module Client where
 
+import Network
 import Network.Socket
+import Control.Concurrent
 import System.IO
 
 import Model
 
 -- Parses user input into a Message.
-parseInput :: String -> Maybe Message
-parseInput = undefined
+parseInput :: String -> IO (Maybe Message)
+parseInput str = return $ Just $ TextData str
     -- Use applicative parsing similar to HW06
 
 -- Serializes messages into a friendly intermediate format to send to server.
 serializeMessage :: Message -> String
-serializeMessage = undefined
-    -- Case analysis on Message constructors
+serializeMessage msg = case msg of
+    TextData str -> "Message," ++ str
+    Login user -> "Login," ++ user
+    Cmd cmd -> serializeCommand cmd
 
 -- Serializes commands into a friendly intermediate format to send to server.
 serializeCommand :: Command -> String
-serializeCommand = undefined
-    -- Case analysis on Command constructors
+serializeCommand cmd = case cmd of 
+    JoinChannel channel -> "Join," ++ channel
+    Whisper user msg -> "Whisper," ++ user ++ "," ++ msg
+    Ignore user -> "Ignore," ++ user
+    ListChannels -> "ListChannels"
+    Help -> "Help"
+    Disconnect -> "Disconnect"
 
 -- | IP address of the local host
 local :: HostName
@@ -30,12 +39,51 @@ local = "127.0.0.1"
 
 -- | Start the client given an IP address and a port. The port should
 -- be a string number > 1024
-client :: HostName -> ServiceName -> IO Handle
-client = undefined
+client :: HostName -> PortID -> IO Handle
+client = connectTo
+
+clientLoop :: Handle -> IO ()
+clientLoop sock = do
+    input <- getLine
+    maybeMsg <- parseInput input
+    case maybeMsg of
+        Just msg -> 
+            let serialMsg = serializeMessage msg in
+            do
+                hPutStr sock (serialMsg ++ "\n")
+                hFlush sock
+                clientLoop sock
+        Nothing -> return ()
+
+
+parseIP :: String -> String
+parseIP ip = case ip of
+    "" -> "192.168.1.83" 
+    s -> s
+
+readLoop :: Handle -> IO ()
+readLoop sock = do
+    line <- hGetLine sock
+    putStrLn line
+    readLoop sock
 
 -- Main entry point for client.
--- main :: IO ()
--- main = undefined
+main :: IO ()
+main = do
+    putStrLn "Enter the ip to connect to - newline for default"
+    ip <- getLine
+    -- sock <- client local (PortNumber 8080)
+    putStrLn ("====== Connecting to: " ++ (parseIP ip) ++ " ======")
+    sock <- client (parseIP ip) (PortNumber 4040)
+    hSetBuffering sock LineBuffering
+    putStrLn "Enter username"
+    username <- getLine
+    hPutStr sock (serializeMessage (Login username))
+    hFlush sock
+    putStrLn ("====== Logged in as: " ++ username ++ " ======")
+    _ <- forkIO (readLoop sock)
+    clientLoop sock
+
     -- Open socket to Server
     -- Loop:
         -- TODO make this double-threaded (using MVars)
