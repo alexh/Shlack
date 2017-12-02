@@ -7,6 +7,7 @@ module Server where
 import qualified Data.Map as M
 import qualified Data.ByteString.Char8 as C
 import Control.Concurrent
+import Control.Concurrent.Chan
 import Network hiding (send, sendTo, recv, recvFrom)
 import Network.Socket hiding (send, sendTo, recv, recvFrom)
 import Network.Socket.ByteString
@@ -41,7 +42,6 @@ instance MonadSocket IO Network.Socket where
     readFrom s' = 
       let s = getNetSocket s' in
       do
-        _ <- Network.Socket.accept s
         byteData <- recv s 1024
         return (parseMessage (C.unpack byteData))
     sendTo = undefined
@@ -74,9 +74,8 @@ sendToChannel = undefined
 
 mainLoop :: Network.Socket -> IO ()
 mainLoop s = do
-  _ <- forkIO (do
-    msg <- readFrom (NetSocket s)
-    putStrLn ("ack: " ++ (show msg)))
+  msg <- readFrom (NetSocket s)
+  putStrLn ("ack: " ++ (show msg))
   mainLoop s
 
 -- Main entry point for server.
@@ -86,7 +85,8 @@ main = do
   setSocketOption s ReuseAddr 1
   bind s (SockAddrInet 4040 iNADDR_ANY)
   listen s 2
-  mainLoop s
+  (s', _) <- Network.Socket.accept s
+  mainLoop s'
 
 -- Open sockets with Clients.
     -- Loop:
