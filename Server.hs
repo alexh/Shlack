@@ -11,6 +11,7 @@ import Control.Concurrent.Chan
 import Network hiding (send, sendTo, recv, recvFrom)
 import Network.Socket hiding (send, sendTo, recv, recvFrom)
 import Network.Socket.ByteString
+import Control.Monad.State.Class
 import Data.Proxy
 import System.IO
 import Model
@@ -27,7 +28,7 @@ data AbstractSocket =
 
 -- State of the server. Boundedly polymorphic in the type of the socket for testing.
 data ServerState s = ServerState {
-  connectedUsers :: M.Map (Server.Socket s) UserName,
+  connectedUsers :: M.Map UserName (Server.Socket s),
   channels :: M.Map Channel [UserName],
   ignoredUsers :: M.Map UserName [UserName]
 }
@@ -72,10 +73,16 @@ evaluateCommand = undefined
 sendToChannel :: MonadSocket m (Server.Socket s) => Proxy s -> String -> Channel -> m ()
 sendToChannel = undefined
 
+readLoop :: Network.Socket -> IO ()
+readLoop s = do
+    msg <- readFrom (NetSocket s)
+    putStrLn ("ack: " ++ (show msg))
+    readLoop s
+
 mainLoop :: Network.Socket -> IO ()
 mainLoop s = do
-  msg <- readFrom (NetSocket s)
-  putStrLn ("ack: " ++ (show msg))
+  (s', _) <- Network.Socket.accept s
+  _ <- forkIO (readLoop s')
   mainLoop s
 
 -- Main entry point for server.
@@ -84,9 +91,8 @@ main = do
   s <- socket AF_INET Stream defaultProtocol
   setSocketOption s ReuseAddr 1
   bind s (SockAddrInet 4040 iNADDR_ANY)
-  listen s 2
-  (s', _) <- Network.Socket.accept s
-  mainLoop s'
+  listen s 4
+  mainLoop s
 
 -- Open sockets with Clients.
     -- Loop:
