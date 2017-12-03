@@ -77,7 +77,7 @@ parseMessage str =
 -- Evaluate a message sent by this client and update the state.
 -- Has a side effect of writing out to clients the data associated with the message.
 -- TODO: Add a constraint like MonadState (ServerState Network.Socket) m here
-evaluateMessage :: MonadSocket m s => s -> UserName -> Message -> ServerState s -> m (ServerState s)
+evaluateMessage :: MonadSocket m s => Server.Socket s -> UserName -> Message -> ServerState s -> m (ServerState s)
 evaluateMessage sckt uname msg st =
   case msg of
       TextData str -> 
@@ -92,9 +92,10 @@ evaluateMessage sckt uname msg st =
         let channel = M.lookup "defaultChannel" (channelToUser st) in
         case channel of
           Just c -> do
-            return (st { userToChannel = (M.insert inputName "defaultChannel" (userToChannel st)),
-                         channelToUser = (M.insert "defaultChannel" (inputName : c) (channelToUser st)),
-                         userToSocket = (M.insert inputName sckt (userToSocket st)) })
+            return (st { userToChannel = M.insert inputName "defaultChannel" (userToChannel st),
+                         channelToUser = M.insert "defaultChannel" (inputName : c) (channelToUser st),
+                         userToSocket = M.insert inputName sckt (userToSocket st),
+                         socketToUser = (sckt, inputName) : socketToUser st })
           Nothing -> do
             return st
       Logout -> undefined
@@ -123,11 +124,11 @@ readLoop st s = do
     let uname = lookup s' (socketToUser ste)
     case uname of
       Just name -> do
-        newState <- evaluateMessage s name msg ste
+        newState <- evaluateMessage s' name msg ste
         putMVar st newState
         readLoop st s
       Nothing -> do
-        newState <- evaluateMessage s "" msg ste
+        newState <- evaluateMessage s' "" msg ste
         putMVar st newState
         readLoop st s
 
