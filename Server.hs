@@ -116,8 +116,6 @@ evaluateMessage sckt uname msg st =
 evaluateCommand :: MonadSocket m (Server.Socket s) => UserName -> Command -> ServerState s -> m (ServerState s)
 evaluateCommand = undefined
 
-
-
 -- Send a message to an entire channel.
 -- The sender of the message is given as a parameter.
 -- TODO: Add a constraint like MonadState (ServerState Network.Socket) m here
@@ -179,10 +177,3 @@ main = do
                         ignoredUsers = M.empty}
   mst <- newMVar st
   mainLoop mst sckt
-
--- Open sockets with Clients.
-    -- Loop:
-        --  Read from socket
-        --  Parse data from intermediate format into message
-        --  Evaluate the message, updating server state if necessary.
-            -- also broadcast any messages that were sent to server

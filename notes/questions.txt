@@ -10,5 +10,7 @@
 -What's up with the number being passed to listen in main? Not sure how that works.
 -How to keep track of threads? Should the ServerState store them? Ask because when users logout
 we probably want to kill the thread associated with them.
+-How do we make the ServerState monadic again? We want to use a state monad.
 -What is this accept thing? How does it give me a new socket? When do I close that socket?
--
+-How to restrict the type of the socket in the MonadSocket IO instance to be netsocket,
+so that I don't have to call getNetSocket?
