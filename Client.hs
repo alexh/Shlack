@@ -8,6 +8,7 @@ import Network
 import Control.Concurrent
 import Data.List.Split
 import System.IO
+import System.Console.ANSI
 
 import Model
 
@@ -67,6 +68,9 @@ client = connectTo
 clientLoop :: Handle -> IO ()
 clientLoop sock = do
     input <- getLine
+    -- cursorUp 1
+    -- clearFromCursorToLineBeginning
+    -- cursorDown 1
     maybeMsg <- return $ parseInput input
     case maybeMsg of
         Just msg -> 
@@ -80,13 +84,20 @@ clientLoop sock = do
 
 parseIP :: String -> String
 parseIP ip = case ip of
-    "" -> "192.168.1.83" 
+    "" -> "192.168.1.190"
+    -- "" -> "192.168.1.83" 
     s -> s
 
 readLoop :: Handle -> IO ()
 readLoop sock = do
     line <- hGetLine sock
-    putStrLn line
+    -- setSGR [SetColor Foreground Vivid Green]
+    -- putStrLn "\033[s"            -- Save cursor position.
+    -- putStrLn "\033[%dA"          -- Move cursor up d lines.
+    -- putStrLn "\r"                -- Moves cursor to beginning of line.
+    putStrLn line                -- String to print.
+    -- setSGR [SetColor Foreground Vivid White]
+    -- putStrLn "\033[u"            -- Restore cursor position.
     readLoop sock
 
 -- Main entry point for client.
