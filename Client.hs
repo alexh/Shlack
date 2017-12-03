@@ -16,7 +16,8 @@ parseInput :: String -> Maybe Message
 -- parseInput str = return $ Just $ TextData str
 parseInput str =
     if length str == 0 then Nothing else
-    let msg = take (length str -1) str in
+    if str == "logout" then Just $ Logout else
+    let msg = str in
     let parts = splitOn " " msg in
     case parts of
         "/whisper" : p2 : rest -> Just $ Cmd $ Whisper p2 (unwords rest)
@@ -24,7 +25,6 @@ parseInput str =
             '/' : cmd -> case cmd of
                 "listchannels" -> Just $ Cmd $ ListChannels
                 "help" -> Just $ Cmd $ Help
-                "disconnect" -> Just $ Cmd $ Disconnect
                 _ -> Nothing
             text -> Just $ TextData text
         p : ps ->
@@ -43,6 +43,7 @@ serializeMessage :: Message -> String
 serializeMessage msg = case msg of
     TextData str -> "Message," ++ str
     Login user -> "Login," ++ user
+    Logout -> "Logout"
     Cmd cmd -> serializeCommand cmd
 
 -- Serializes commands into a friendly intermediate format to send to server.
@@ -53,7 +54,6 @@ serializeCommand cmd = case cmd of
     Ignore user -> "Ignore," ++ user
     ListChannels -> "ListChannels"
     Help -> "Help"
-    Disconnect -> "Disconnect"
 
 -- | IP address of the local host
 local :: HostName
