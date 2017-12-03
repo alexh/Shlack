@@ -32,6 +32,9 @@ serverIter sock = do
     Login u ->
       -- Add the user to the chat platform. User should start in a default "general" channel.
       return ()
+    Logout ->
+      -- Remove the user from their channel and close the client.
+      return ()
     Cmd c ->
       -- Note that the sender of messages will be identified by the socket they are connected to.
       case c of
@@ -49,9 +52,6 @@ serverIter sock = do
           return ()
         Help ->
           -- Output helpful information to the sender about how to use the platform.
-          return ()
-        Disconnect ->
-          -- Remove the user from their channel and close the client.
           return ()
 
 -- Example of a test suite for server actions.
