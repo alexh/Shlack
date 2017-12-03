@@ -14,7 +14,6 @@ import Control.Monad.State.Class
 import Control.Concurrent.MVar
 import Data.Proxy
 import Data.List.Split
-import System.IO
 import Model
 
 -- A socket type for either real usage or testing.
@@ -84,7 +83,7 @@ evaluateMessage sckt uname msg st =
         let channel = M.lookup uname (userToChannel st) in
         case channel of
           Just c -> do
-            sendToChannel Proxy str c st
+            sendToChannel Proxy uname str c st
             return st
           Nothing -> do
             return st
@@ -97,8 +96,18 @@ evaluateMessage sckt uname msg st =
                          userToSocket = M.insert inputName sckt (userToSocket st),
                          socketToUser = (sckt, inputName) : socketToUser st })
           Nothing -> do
+            return (st { userToChannel = M.insert inputName "defaultChannel" (userToChannel st),
+                         channelToUser = M.insert "defaultChannel" [inputName] (channelToUser st),
+                         userToSocket = M.insert inputName sckt (userToSocket st),
+                         socketToUser = (sckt, inputName) : socketToUser st })
+      Logout ->
+        let channel = M.lookup uname (userToChannel st) in
+        let sckt = M.lookup uname (userToSocket st) in
+        case (sckt, channel) of
+          (Just s, Just c) -> do
+            undefined
+          _ -> do
             return st
-      Logout -> undefined
       Cmd c -> undefined -- TODO, after checkpoint 2?
 
 -- Evaluate a command sent by this client and update the state.
@@ -107,11 +116,28 @@ evaluateMessage sckt uname msg st =
 evaluateCommand :: MonadSocket m (Server.Socket s) => UserName -> Command -> ServerState s -> m (ServerState s)
 evaluateCommand = undefined
 
+
+
 -- Send a message to an entire channel.
+-- The sender of the message is given as a parameter.
 -- TODO: Add a constraint like MonadState (ServerState Network.Socket) m here
-sendToChannel :: MonadSocket m s => Proxy s -> String -> Channel -> ServerState s -> m ()
-sendToChannel _ str c st =
-  undefined
+sendToChannel :: MonadSocket m s => Proxy s -> UserName -> String -> Channel -> ServerState s -> m ()
+sendToChannel _ uname str c st = do
+  let recvs = M.lookup c (channelToUser st)
+  case recvs of
+    Just receivers -> do {
+      let sendHelper receiver = do {
+        let receiverSocket = M.lookup receiver (userToSocket st) in
+        case receiverSocket of
+          Just rSckt ->
+            if uname == receiver 
+              then return () 
+              else Server.sendTo rSckt (uname ++ ": " ++ str ++ "\n")
+          Nothing -> return ()
+        } in
+      mapM_ sendHelper receivers
+    }
+    Nothing -> return ()
 
 -- Repeatedly read from the socket.
 readLoop :: MonadSocket IO NS.Socket => (MVar (ServerState NS.Socket)) -> NS.Socket -> IO ()
@@ -119,7 +145,6 @@ readLoop st s = do
     let s' = NetSocket s
     msg <- readFrom s'
     putStrLn ("ack: " ++ show msg)
-    Server.sendTo s' "acknowledged"
     ste <- takeMVar st
     let uname = lookup s' (socketToUser ste)
     case uname of

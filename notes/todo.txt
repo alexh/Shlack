@@ -1,2 +1,3 @@
--Update the socket map state for both maps in evaluateToMessage
--write sendToChannel
+-do logout/commands
+    -close socket on a logout
+-make the server state a monad state
