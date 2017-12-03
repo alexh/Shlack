@@ -5,3 +5,10 @@
 -Are we using the MonadSocket in the right way (esp. in the type constraint for functions?)
 -Should the ServerState be a state monad? How would that look? What are the trade offs?
 -Why doesn't sendToChannel compile?
+
+(* Checkpoint 2 Questions *)
+-What's up with the number being passed to listen in main? Not sure how that works.
+-How to keep track of threads? Should the ServerState store them? Ask because when users logout
+we probably want to kill the thread associated with them.
+-What is this accept thing? How does it give me a new socket? When do I close that socket?
+-

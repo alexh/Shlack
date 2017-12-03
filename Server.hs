@@ -171,7 +171,7 @@ main = do
   sckt <- socket AF_INET Stream defaultProtocol
   setSocketOption sckt ReuseAddr 1
   bind sckt (SockAddrInet 4040 iNADDR_ANY)
-  listen sckt 3
+  listen sckt 4
   let st = ServerState {socketToUser = [], 
                         userToSocket = M.empty, 
                         channelToUser = M.empty, 
