@@ -1,0 +1,2 @@
+-Update the socket map state for both maps in evaluateToMessage
+-write sendToChannel

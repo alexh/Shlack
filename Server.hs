@@ -8,7 +8,7 @@ import qualified Data.Map.Strict as M
 import qualified Data.ByteString.Char8 as C
 import Control.Concurrent
 import Network hiding (sendTo, recvFrom)
-import Network.Socket as S hiding (send, sendTo, recv, recvFrom)
+import Network.Socket as NS hiding (send, sendTo, recv, recvFrom)
 import Network.Socket.ByteString
 import Control.Monad.State.Class
 import Control.Concurrent.MVar
@@ -19,7 +19,7 @@ import Model
 
 -- A socket type for either real usage or testing.
 data Socket s where
-    NetSocket :: S.Socket -> Server.Socket S.Socket
+    NetSocket :: NS.Socket -> Server.Socket NS.Socket
     AbsSocket :: AbstractSocket -> Server.Socket AbstractSocket
 
 -- An Eq instance for real sockets.
@@ -46,7 +46,7 @@ class Monad m => MonadSocket m s where
   sendTo :: Server.Socket s -> String -> m ()
 
 -- Concrete MonadSocket instance for actual server.
-instance MonadSocket IO S.Socket where
+instance MonadSocket IO NS.Socket where
     readFrom s' = 
       let s = getNetSocket s' in
       do
@@ -93,7 +93,8 @@ evaluateMessage sckt uname msg st =
         case channel of
           Just c -> do
             return (st { userToChannel = (M.insert inputName "defaultChannel" (userToChannel st)),
-                         channelToUser = (M.insert "defaultChannel" (uname : c) (channelToUser st)) })
+                         channelToUser = (M.insert "defaultChannel" (inputName : c) (channelToUser st)),
+                         userToSocket = (M.insert inputName sckt (userToSocket st)) })
           Nothing -> do
             return st
       Logout -> undefined
@@ -112,7 +113,7 @@ sendToChannel _ str c st =
   undefined
 
 -- Repeatedly read from the socket.
-readLoop :: MonadSocket IO S.Socket => (MVar (ServerState S.Socket)) -> S.Socket -> IO ()
+readLoop :: MonadSocket IO NS.Socket => (MVar (ServerState NS.Socket)) -> NS.Socket -> IO ()
 readLoop st s = do
     let s' = NetSocket s
     msg <- readFrom s'
@@ -131,15 +132,15 @@ readLoop st s = do
         readLoop st s
 
 -- Repeatedly accept connections and fork a new thread to read from them.
-mainLoop :: MonadSocket IO S.Socket => (MVar (ServerState Network.Socket)) -> Network.Socket -> IO ()
+mainLoop :: MonadSocket IO NS.Socket => (MVar (ServerState Network.Socket)) -> Network.Socket -> IO ()
 mainLoop st s = do
   -- Related TODO, make the ServerState be a monadic state so our lives are easier
-  (s', _) <- S.accept s
+  (s', _) <- NS.accept s
   _ <- forkIO (readLoop st s')
   mainLoop st s
 
 -- Main entry point for server.
-main :: MonadSocket IO S.Socket => IO ()
+main :: MonadSocket IO NS.Socket => IO ()
 main = do
   sckt <- socket AF_INET Stream defaultProtocol
   setSocketOption sckt ReuseAddr 1
