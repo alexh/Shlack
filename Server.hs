@@ -11,7 +11,6 @@ import Network hiding (sendTo, recvFrom)
 import Network.Socket as NS hiding (send, sendTo, recv, recvFrom)
 import Network.Socket.ByteString
 import Control.Monad.State.Class
-import Control.Concurrent.MVar
 import Data.Proxy
 import Data.List.Split
 import Model
@@ -44,21 +43,12 @@ class Monad m => MonadSocket m s where
   readFrom :: Server.Socket s -> m Message
   sendTo :: Server.Socket s -> String -> m ()
 
--- Concrete MonadSocket instance for actual server.
 instance MonadSocket IO NS.Socket where
-    readFrom s' = 
-      let s = getNetSocket s' in
-      do
+    readFrom (NetSocket s) = do
         byteData <- recv s 1024
         return (parseMessage (C.unpack byteData))
-    sendTo s' str =
-      let s = getNetSocket s' in
-      do
+    sendTo (NetSocket s) str = do
         sendAll s (C.pack $ str)
-
-getNetSocket :: Server.Socket s -> Network.Socket
-getNetSocket (NetSocket s) = s
-getNetSocket _ = undefined -- todo?
 
 -- Parses String received from Client into a Message.
 -- String has a friendly intermediate format.
@@ -76,6 +66,8 @@ parseMessage str =
 -- Evaluate a message sent by this client and update the state.
 -- Has a side effect of writing out to clients the data associated with the message.
 -- TODO: Add a constraint like MonadState (ServerState Network.Socket) m here
+-- (MonadSocket m s, MonadState m (ServerState s)) => .... -> m ()
+-- StateT m (ServerState s) a
 evaluateMessage :: MonadSocket m s => Server.Socket s -> UserName -> Message -> ServerState s -> m (ServerState s)
 evaluateMessage sckt uname msg st =
   case msg of
@@ -161,6 +153,7 @@ mainLoop st s = do
   -- Related TODO, make the ServerState be a monadic state so our lives are easier
   (s', _) <- NS.accept s
   _ <- forkIO (readLoop st s')
+  -- todo close done threads?
   mainLoop st s
 
 -- Main entry point for server.
