@@ -60,7 +60,7 @@ instance MonadSocket IO NS.Socket where
 -- String has a friendly intermediate format.
 parseMessage :: String -> Message
 parseMessage str =
-  let parts = splitOn "," str in
+  let parts = splitOn delim str in
   case parts of
     p1 : p2 : [] -> case p1 of
       "Message" -> TextData p2

@@ -42,17 +42,17 @@ parseInput str =
 -- Serializes messages into a friendly intermediate format to send to server.
 serializeMessage :: Message -> String
 serializeMessage msg = case msg of
-    TextData str -> "Message," ++ str
-    Login user -> "Login," ++ user
+    TextData str -> "Message" ++ delim ++ str
+    Login user -> "Login" ++ delim ++ user
     Logout -> "Logout"
     Cmd cmd -> serializeCommand cmd
 
 -- Serializes commands into a friendly intermediate format to send to server.
 serializeCommand :: Command -> String
 serializeCommand cmd = case cmd of 
-    JoinChannel channel -> "Join," ++ channel
-    Whisper user msg -> "Whisper," ++ user ++ "," ++ msg
-    Ignore user -> "Ignore," ++ user
+    JoinChannel channel -> "Join" ++ delim ++ channel
+    Whisper user msg -> "Whisper" ++ delim ++ user ++ delim ++ msg
+    Ignore user -> "Ignore" ++ delim ++ user
     ListChannels -> "ListChannels"
     Help -> "Help"
 
