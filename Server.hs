@@ -133,7 +133,20 @@ evaluateMessage sckt uname msg st =
 evaluateCommand :: MonadSocket m s => UserName -> Command -> ServerState s -> m (ServerState s)
 evaluateCommand uname cmd st =
   case cmd of 
-    JoinChannel channel -> undefined
+    JoinChannel newChannel ->
+      let currC = M.lookup uname (userToChannel st) in
+      case currC of
+        Just currChannel ->
+          let usersInC = M.lookup currChannel (channelToUser st)
+              usersInNewC = M.lookup newChannel (channelToUser st) in 
+          case (usersInC, usersInNewC) of
+            (Just usersInChannel, Just usersInNewChannel) -> do
+              -- Remove user from old channel and insert into new channel.
+              let oldMap = M.insert currChannel (L.delete uname usersInChannel) (channelToUser st)
+              return (st { userToChannel = M.insert uname newChannel (userToChannel st),
+                           channelToUser = M.insert newChannel (uname : usersInNewChannel) oldMap })
+            _ -> return st
+        Nothing -> return st
     Whisper receiver msg -> undefined
     Ignore receiver -> undefined -- todo, do we care about doing this?
     ListChannels -> do
@@ -172,7 +185,7 @@ readLoop st s = do
     let s' = NetSocket s
     msg <- readFrom s'
     putStrLn ("ack: " ++ show msg)
-    ste <- takeMVar st
+    ste <- takeMVar st -- TODO do a put after to avoid race condition?
     let uname = lookup s' (socketToUser ste)
     case uname of
       Just name -> do
@@ -193,7 +206,7 @@ mainLoop :: MonadSocket IO NS.Socket => (MVar (ServerState Network.Socket)) -> N
 mainLoop st s = do
   (s', _) <- NS.accept s
   _ <- forkIO (readLoop st s')
-  -- todo close done threads?
+  -- TODO close done threads?
   mainLoop st s
 
 -- Main entry point for server.
