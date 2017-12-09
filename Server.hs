@@ -5,6 +5,7 @@
 module Server where
 
 import qualified Data.Map.Strict as M
+import qualified Data.List as L
 import qualified Data.ByteString.Char8 as C
 import Control.Concurrent
 import Network hiding (sendTo, recvFrom)
@@ -17,17 +18,22 @@ import Model
 
 -- A socket type for either real usage or testing.
 data Socket s where
-    NetSocket :: NS.Socket -> Server.Socket NS.Socket
-    AbsSocket :: AbstractSocket -> Server.Socket AbstractSocket
-
--- An Eq instance for real sockets.
-instance Eq (Server.Socket Network.Socket) where
-  (NetSocket s1) == (NetSocket s2) = s1 == s2
+    NetSocket :: Eq NS.Socket => NS.Socket -> Server.Socket NS.Socket
+    AbsSocket :: Eq AbstractSocket => AbstractSocket -> Server.Socket AbstractSocket
 
 -- And here is the abstract socket type for testing.
 data AbstractSocket =
   AbstractSocket { getAbstractSocket :: Int,
                    getSocketData :: String }
+  deriving (Eq, Show)
+
+-- An Eq instance for real sockets.
+instance Eq (Server.Socket Network.Socket) where
+  (NetSocket s1) == (NetSocket s2) = s1 == s2
+
+-- An Eq instance for abstract sockets.
+instance Eq (Server.Socket AbstractSocket) where
+  (AbsSocket s1) == (AbsSocket s2) = s1 == s2
 
 -- State of the server. Boundedly polymorphic in the type of the socket for testing.
 data ServerState s = ServerState {
@@ -59,16 +65,28 @@ parseMessage str =
     p1 : p2 : [] -> case p1 of
       "Message" -> TextData p2
       "Login" -> Login p2
+    _ -> case str of
+      -- no comma in serialization
+      "Logout\n" -> Logout
       _ -> TextData "parse error"
-    _ -> TextData "parse error"
 
+-- Removes this user from the given map of ignoredUsers.
+removeIgnoredUser :: UserName -> M.Map UserName [UserName] -> M.Map UserName [UserName]
+removeIgnoredUser user userMap =
+  let newMap = M.delete user userMap in
+  fmap (\ userList -> L.delete user userList) newMap
 
 -- Evaluate a message sent by this client and update the state.
 -- Has a side effect of writing out to clients the data associated with the message.
 -- TODO: Add a constraint like MonadState (ServerState Network.Socket) m here
 -- (MonadSocket m s, MonadState m (ServerState s)) => .... -> m ()
 -- StateT m (ServerState s) a
-evaluateMessage :: MonadSocket m s => Server.Socket s -> UserName -> Message -> ServerState s -> m (ServerState s)
+evaluateMessage :: (Eq (Server.Socket s), MonadSocket m s) => 
+  Server.Socket s -> 
+  UserName -> 
+  Message -> 
+  ServerState s -> 
+  m (ServerState s)
 evaluateMessage sckt uname msg st =
   case msg of
       TextData str -> 
@@ -97,7 +115,17 @@ evaluateMessage sckt uname msg st =
         let sckt = M.lookup uname (userToSocket st) in
         case (sckt, channel) of
           (Just s, Just c) -> do
-            undefined
+            -- remove user from state
+            let usersInChannel = M.lookup c (channelToUser st)
+            case usersInChannel of
+              Just users -> 
+                return (st { userToChannel = M.delete uname (userToChannel st),
+                              channelToUser = M.insert c (L.delete uname (users)) (channelToUser st),
+                              userToSocket = M.delete uname (userToSocket st),
+                              socketToUser = L.delete (s, uname) (socketToUser st),
+                              ignoredUsers = removeIgnoredUser uname (ignoredUsers st) })
+              _ -> do
+                return st
           _ -> do
             return st
       Cmd c -> undefined -- TODO, after checkpoint 2?
@@ -141,7 +169,11 @@ readLoop st s = do
       Just name -> do
         newState <- evaluateMessage s' name msg ste
         putMVar st newState
-        readLoop st s
+        case msg of
+          Logout -> do
+            close s
+            return ()
+          _ -> readLoop st s
       Nothing -> do
         newState <- evaluateMessage s' "" msg ste
         putMVar st newState

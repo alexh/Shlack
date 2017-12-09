@@ -98,9 +98,8 @@ clientLoop sock user = do
 
 parseIP :: String -> String
 parseIP ip = case ip of
-    "" -> "192.168.1.190"
-    -- "" -> "192.168.1.83" 
-    -- "" -> "158.130.173.150"
+    -- "" -> "192.168.1.190"
+    "" -> "192.168.1.83" 
     s -> s
 
 readLoop :: Handle -> IO ()
