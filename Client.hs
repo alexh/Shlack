@@ -142,6 +142,19 @@ printPrompt str = do
     setSGR [SetColor Foreground Dull White]
     hFlush stdout
 
+printWelcomeMessage :: String -> IO ()
+printWelcomeMessage user = do
+    printServerNotification ("hey " ++ user ++ " welcome to Shlλck!")
+    putStrLn "          ,▄▄,                 ▄▄        ▄▄  ▄▄▄               ▄▄"
+    putStrLn "    ,▄█▓▓▓▓▓▓▓▓▓▄              ▓▓        ▓▓    ▓▓              ▓▓ "
+    putStrLn "   ▓▌,  ▀▓▓▓▓▓▓▓▓▌     ▄▄▓▓▄▄  ▓▓▄▄▓▓▄   ▓▓    ▐▓▓     ,▄▓▓▓▄▄ ▓▓   ▄▓▄"
+    putStrLn "  |▓▓▓▓▓   ▓▓▓▓▓▓▓▄   ▐▓▓   ▀  ▓▓▀   ▓▓  ▓▓    ▓▓▓▌   ▓▓▓▀  ▀  ▓▓▄▄▓▓▀"
+    putStrLn "  ▐▓▓▓▓▓▌ ▄  ▀▓▓▓▓▓    ▀█▓▓▓▄  ▓▓    ▓▓  ▓▓   ▓▓▀▀▓▄  ▓▓       ▓▓▓▓▓▌"
+    putStrLn "   ▓▓▓▓▓▌ |▓▄   ▓▓▓    ▄  ▓▓▓  ▓▓    ▓▓  ▓▓  ▓▓▌  ▓▓▄ ▀▓▓▄__▄, ▓▓▌ ▀▓▓▄"
+    putStrLn "    ▓▓▓▓▌ ▐▓▓▓▓▓▓▓`    ▀▀▀▀▀▀  ▀▀    ▀▀  ▀▀  ▀▀    ▀▀▀ '▀▀▀▀▀  ▀▀    ▀▀`"
+    putStrLn "     ▀▓▓▓▓▓▓▓▓▀▀ "
+    putStrLn ""
+    writeDivider
 -- Main entry point for client.
 main :: IO ()
 main = do
@@ -153,9 +166,9 @@ main = do
     hSetBuffering sock LineBuffering
     printPrompt "Enter username"
     username <- getLine
+    printWelcomeMessage username
     hPutStr sock (serializeMessage (Login username))
     hFlush sock
-    printServerNotification ("logged in as: " ++ username)
     _ <- forkIO (readLoop sock)
     writeDivider
     clientLoop sock username
