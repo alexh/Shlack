@@ -1,10 +1,6 @@
--do logout/commands
-    -close socket on a logout
-    -pass flags to our readLoop functions so we know when to close a socket
--make the server state a monad state
-    -** use state transformer on top of IO? **
--add state constraint to our functions
+-add handling of commands
 -make clients pretty (weird terminal character)
 -write tests with mock monad for server
 -make project into stack project so we can build 2 binaries
 -try lots of clients (test thread limit)
+-write in signal handlers for sigint, sigterm, etc. if we have time
