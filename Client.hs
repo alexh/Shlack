@@ -159,6 +159,7 @@ printWelcomeMessage user = do
     putStrLn "     ▀▓▓▓▓▓▓▓▓▀▀ "
     putStrLn ""
     writeDivider
+    
 -- Main entry point for client.
 main :: IO ()
 main = do
