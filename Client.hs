@@ -1,6 +1,7 @@
 {-# LANGUAGE
   TypeFamilies, FlexibleContexts
 #-}
+{-# OPTIONS -fwarn-tabs -fwarn-incomplete-patterns #-}
 
 module Main where
 
@@ -120,8 +121,8 @@ clientLoop sock user chnl = do
 
 parseIP :: String -> String
 parseIP ip = case ip of
-    "" -> "192.168.1.190"
-    -- "" -> "192.168.1.83" 
+    -- "" -> "192.168.1.190"
+    "" -> "192.168.1.83" 
     s -> s
 
 writeDivider :: Maybe String -> IO ()

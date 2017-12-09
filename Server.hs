@@ -1,6 +1,7 @@
 {-# LANGUAGE
   TypeFamilies, FlexibleContexts, MultiParamTypeClasses, GADTs, FlexibleInstances, ScopedTypeVariables
 #-}
+{-# OPTIONS -fwarn-tabs -fwarn-incomplete-patterns #-}
 
 module Server where
 
@@ -65,6 +66,8 @@ parseMessage str =
     p1 : p2 : [] -> case p1 of
       "Message" -> TextData p2
       "Login" -> Login p2
+      "Join" -> Cmd $ JoinChannel p2
+      _ -> TextData "parse error"
     _ -> case str of
       -- no delimeter
       "Logout" -> Logout
@@ -145,6 +148,11 @@ evaluateCommand uname cmd st =
               let oldMap = M.insert currChannel (L.delete uname usersInChannel) (channelToUser st)
               return (st { userToChannel = M.insert uname newChannel (userToChannel st),
                            channelToUser = M.insert newChannel (uname : usersInNewChannel) oldMap })
+            (Just usersInChannel, Nothing) -> do
+              -- Channel does not exist yet.
+              let oldMap = M.insert currChannel (L.delete uname usersInChannel) (channelToUser st)
+              return (st { userToChannel = M.insert uname newChannel (userToChannel st),
+                           channelToUser = M.insert newChannel [uname] oldMap })
             _ -> return st
         Nothing -> return st
     Whisper receiver msg -> undefined
