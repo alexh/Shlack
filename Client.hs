@@ -42,17 +42,17 @@ parseInput str =
 -- Serializes messages into a friendly intermediate format to send to server.
 serializeMessage :: Message -> String
 serializeMessage msg = case msg of
-    TextData str -> "Message," ++ str
-    Login user -> "Login," ++ user
+    TextData str -> "Message" ++ delim ++ str
+    Login user -> "Login" ++ delim ++ user
     Logout -> "Logout"
     Cmd cmd -> serializeCommand cmd
 
 -- Serializes commands into a friendly intermediate format to send to server.
 serializeCommand :: Command -> String
 serializeCommand cmd = case cmd of 
-    JoinChannel channel -> "Join," ++ channel
-    Whisper user msg -> "Whisper," ++ user ++ "," ++ msg
-    Ignore user -> "Ignore," ++ user
+    JoinChannel channel -> "Join" ++ delim ++ channel
+    Whisper user msg -> "Whisper" ++ delim ++ user ++ delim ++ msg
+    Ignore user -> "Ignore" ++ delim ++ user
     ListChannels -> "ListChannels"
     Help -> "Help"
 
@@ -68,6 +68,10 @@ client = connectTo
 clientLoop :: Handle -> String -> IO ()
 clientLoop sock user = do
     input <- getLine
+    if input == "" then do
+        scrollPageDown 1
+        hFlush stdout
+        clientLoop sock user else do
     cursorUp 2
     hFlush stdout
     clearFromCursorToLineEnd
@@ -91,13 +95,13 @@ clientLoop sock user = do
                 if msg == Logout then
                     return ()
                     else clientLoop sock user
-        Nothing -> return ()
+        Nothing -> clientLoop sock user
 
 
 parseIP :: String -> String
 parseIP ip = case ip of
-    "" -> "192.168.1.190"
-    -- "" -> "192.168.1.83" 
+    -- "" -> "192.168.1.190"
+    "" -> "192.168.1.83" 
     s -> s
 
 writeDivider :: IO ()

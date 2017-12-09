@@ -8,6 +8,10 @@ module Model where
 import Network.Socket
 import System.IO
 
+-- Delimeter for intermediate format.
+delim :: String
+delim = "%^%"
+
 -- Type of usernames.
 type UserName = String
 
