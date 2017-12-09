@@ -70,20 +70,17 @@ clientLoop sock user = do
     input <- getLine
     cursorUp 2
     hFlush stdout
-    clearFromCursorToScreenEnd
+    clearFromCursorToLineEnd
     hFlush stdout
+    setSGR [SetColor Foreground Dull Cyan]
     putStr (user ++ ": " ++ input)
     hFlush stdout
+    setSGR [SetColor Foreground Dull White]
     cursorDown 1
     hFlush stdout
     setCursorColumn 0
     hFlush stdout
-    putStrLn "--------------------------------------------"
-    hFlush stdout
-    -- threadDelay 1000000
-    cursorDown 1
-    hFlush stdout
-    -- threadDelay 1000000
+    writeDivider
     maybeMsg <- return $ parseInput input
     case maybeMsg of
         Just msg ->
@@ -91,51 +88,76 @@ clientLoop sock user = do
             do
                 hPutStr sock serialMsg
                 hFlush sock
-                if msg == Logout then return ()
+                if msg == Logout then
+                    return ()
                     else clientLoop sock user
         Nothing -> return ()
 
 
 parseIP :: String -> String
 parseIP ip = case ip of
-    -- "" -> "192.168.1.190"
-    "" -> "192.168.1.83" 
+    "" -> "192.168.1.190"
+    -- "" -> "192.168.1.83" 
     s -> s
+
+writeDivider :: IO ()
+writeDivider = do
+    setSGR [SetColor Foreground Dull Yellow]
+    putStrLn "-----------------------------------"
+    hFlush stdout
+    setSGR [SetColor Foreground Dull White]
+    hFlush stdout
 
 readLoop :: Handle -> IO ()
 readLoop sock = do
     line <- hGetLine sock
-    -- setSGR [SetColor Foreground Vivid Green]
-    -- putStrLn "\033[s"            -- Save cursor position.
-    -- putStrLn "\033[%dA"          -- Move cursor up d lines.
-    -- putStrLn "\r"                -- Moves cursor to beginning of line.
-    putStrLn line                -- String to print.
-    -- setSGR [SetColor Foreground Vivid White]
-    -- putStrLn "\033[u"            -- Restore cursor position.
+    -- threadDelay 1000000
+    setSGR [SetColor Foreground Dull Blue]
+    cursorUp 1
+    hFlush stdout
+    -- threadDelay 1000000
+    setCursorColumn 0
+    hFlush stdout
+    clearFromCursorToLineEnd
+    hFlush stdout
+    -- threadDelay 3000000
+    -- threadDelay 1000000
+    putStrLn line
+    hFlush stdout
+    writeDivider
     readLoop sock
+
+printServerNotification :: String -> IO ()
+printServerNotification str = do
+    setSGR [SetColor Foreground Dull Green]
+    hFlush stdout
+    putStrLn ("[Server]: " ++ str)
+    setSGR [SetColor Foreground Dull White]
+    hFlush stdout
+
+printPrompt :: String -> IO ()
+printPrompt str = do
+    setSGR [SetColor Foreground Dull Yellow]
+    putStrLn str
+    setSGR [SetColor Foreground Dull White]
+    hFlush stdout
 
 -- Main entry point for client.
 main :: IO ()
 main = do
-    setSGR [SetColor Foreground Dull White]
-    putStrLn "Enter the ip to connect to - newline for default"
+    printPrompt "Enter server IP"
     ip <- getLine
-    -- sock <- client local (PortNumber 8080)
-    setSGR [SetColor Foreground Dull Green]
-    putStrLn ("====== Connecting to: " ++ (parseIP ip) ++ " ======")
+    printServerNotification ("connecting to: " ++ (parseIP ip))
+    hFlush stdout
     sock <- client (parseIP ip) (PortNumber 4040)
     hSetBuffering sock LineBuffering
-    setSGR [SetColor Foreground Dull White]
-    putStrLn "Enter username"
+    printPrompt "Enter username"
     username <- getLine
     hPutStr sock (serializeMessage (Login username))
     hFlush sock
-    setSGR [SetColor Foreground Dull Green]
-    putStrLn ("====== Logged in as: " ++ username ++ " ======")
-    setSGR [SetColor Foreground Dull White]
-    hFlush stdout
-    -- _ <- forkIO (readLoop sock)
-    putStrLn "--------------------------------------------"
+    printServerNotification ("logged in as: " ++ username)
+    _ <- forkIO (readLoop sock)
+    writeDivider
     clientLoop sock username
 
     -- Open socket to Server

@@ -67,7 +67,7 @@ parseMessage str =
       "Login" -> Login p2
     _ -> case str of
       -- no comma in serialization
-      "Logout\n" -> Logout
+      "Logout" -> Logout
       _ -> TextData "parse error"
 
 -- Removes this user from the given map of ignoredUsers.
