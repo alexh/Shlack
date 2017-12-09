@@ -66,8 +66,9 @@ parseMessage str =
       "Message" -> TextData p2
       "Login" -> Login p2
     _ -> case str of
-      -- no comma in serialization
+      -- no delimeter
       "Logout" -> Logout
+      "ListChannels" -> Cmd ListChannels
       _ -> TextData "parse error"
 
 -- Removes this user from the given map of ignoredUsers.
@@ -125,12 +126,20 @@ evaluateMessage sckt uname msg st =
                 return st
           _ -> do
             return st
-      Cmd c -> undefined -- TODO, after checkpoint 2.
+      Cmd c -> evaluateCommand uname c st
 
 -- Evaluate a command sent by this client and update the state.
 -- Has a side effect of writing out to clients the data associated with the command.
-evaluateCommand :: MonadSocket m (Server.Socket s) => UserName -> Command -> ServerState s -> m (ServerState s)
-evaluateCommand = undefined
+evaluateCommand :: MonadSocket m s => UserName -> Command -> ServerState s -> m (ServerState s)
+evaluateCommand uname cmd st =
+  case cmd of 
+    JoinChannel channel -> undefined
+    Whisper receiver msg -> undefined
+    Ignore receiver -> undefined -- todo, do we care about doing this?
+    ListChannels -> do
+      sendToUser Proxy "" uname (show (M.keys (channelToUser st)) ++ "\n") st
+      return st
+    Help -> undefined
 
 -- Send a message to an entire channel.
 -- The sender of the message is given as a parameter.
@@ -138,19 +147,24 @@ sendToChannel :: MonadSocket m s => Proxy s -> UserName -> String -> Channel -> 
 sendToChannel _ uname str c st = do
   let recvs = M.lookup c (channelToUser st)
   case recvs of
-    Just receivers -> do {
-      let sendHelper receiver = do {
-        let receiverSocket = M.lookup receiver (userToSocket st) in
-        case receiverSocket of
-          Just rSckt ->
-            if uname == receiver 
-              then return () 
-              else Server.sendTo rSckt (uname ++ ": " ++ str ++ "\n")
-          Nothing -> return ()
-        } in
-      mapM_ sendHelper receivers
-    }
+    Just receivers -> do
+      mapM_ (\receiver -> sendToUser Proxy uname receiver str st) receivers
     Nothing -> return ()
+
+-- Send a message to a single user.
+-- Sender of message given as a parameter. Use "" if server is the sender.
+sendToUser :: MonadSocket m s => Proxy s -> UserName -> UserName -> String -> ServerState s -> m ()
+sendToUser _ sender receiver str st = do {
+  let receiverSocket = M.lookup receiver (userToSocket st) in
+  case receiverSocket of
+    Just rSckt ->
+      if sender == receiver
+        then return () 
+        else if sender == ""
+          then Server.sendTo rSckt str
+          else Server.sendTo rSckt (sender ++ ": " ++ str ++ "\n")
+    Nothing -> return ()
+  }
 
 -- Repeatedly read from the socket.
 readLoop :: MonadSocket IO NS.Socket => (MVar (ServerState NS.Socket)) -> NS.Socket -> IO ()
