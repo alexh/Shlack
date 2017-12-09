@@ -68,6 +68,10 @@ client = connectTo
 clientLoop :: Handle -> String -> IO ()
 clientLoop sock user = do
     input <- getLine
+    if input == "" then do
+        scrollPageDown 1
+        hFlush stdout
+        clientLoop sock user else do
     cursorUp 2
     hFlush stdout
     clearFromCursorToLineEnd
@@ -91,13 +95,13 @@ clientLoop sock user = do
                 if msg == Logout then
                     return ()
                     else clientLoop sock user
-        Nothing -> return ()
+        Nothing -> clientLoop sock user
 
 
 parseIP :: String -> String
 parseIP ip = case ip of
-    "" -> "192.168.1.190"
-    -- "" -> "192.168.1.83" 
+    -- "" -> "192.168.1.190"
+    "" -> "192.168.1.83" 
     s -> s
 
 writeDivider :: IO ()
