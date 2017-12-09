@@ -65,21 +65,34 @@ local = "127.0.0.1"
 client :: HostName -> PortID -> IO Handle
 client = connectTo
 
-clientLoop :: Handle -> IO ()
-clientLoop sock = do
+clientLoop :: Handle -> String -> IO ()
+clientLoop sock user = do
     input <- getLine
-    -- cursorUp 1
-    -- clearFromCursorToLineBeginning
-    -- cursorDown 1
+    cursorUp 2
+    hFlush stdout
+    clearFromCursorToScreenEnd
+    hFlush stdout
+    putStr (user ++ ": " ++ input)
+    hFlush stdout
+    cursorDown 1
+    hFlush stdout
+    setCursorColumn 0
+    hFlush stdout
+    putStrLn "--------------------------------------------"
+    hFlush stdout
+    -- threadDelay 1000000
+    cursorDown 1
+    hFlush stdout
+    -- threadDelay 1000000
     maybeMsg <- return $ parseInput input
     case maybeMsg of
         Just msg ->
             let serialMsg = serializeMessage msg in
             do
-                hPutStr sock (serialMsg ++ "\n")
+                hPutStr sock serialMsg
                 hFlush sock
                 if msg == Logout then return ()
-                    else clientLoop sock
+                    else clientLoop sock user
         Nothing -> return ()
 
 
@@ -105,19 +118,26 @@ readLoop sock = do
 -- Main entry point for client.
 main :: IO ()
 main = do
+    setSGR [SetColor Foreground Dull White]
     putStrLn "Enter the ip to connect to - newline for default"
     ip <- getLine
     -- sock <- client local (PortNumber 8080)
+    setSGR [SetColor Foreground Dull Green]
     putStrLn ("====== Connecting to: " ++ (parseIP ip) ++ " ======")
     sock <- client (parseIP ip) (PortNumber 4040)
     hSetBuffering sock LineBuffering
+    setSGR [SetColor Foreground Dull White]
     putStrLn "Enter username"
     username <- getLine
     hPutStr sock (serializeMessage (Login username))
     hFlush sock
+    setSGR [SetColor Foreground Dull Green]
     putStrLn ("====== Logged in as: " ++ username ++ " ======")
-    _ <- forkIO (readLoop sock)
-    clientLoop sock
+    setSGR [SetColor Foreground Dull White]
+    hFlush stdout
+    -- _ <- forkIO (readLoop sock)
+    putStrLn "--------------------------------------------"
+    clientLoop sock username
 
     -- Open socket to Server
     -- Loop:
