@@ -78,9 +78,6 @@ removeIgnoredUser user userMap =
 
 -- Evaluate a message sent by this client and update the state.
 -- Has a side effect of writing out to clients the data associated with the message.
--- TODO: Add a constraint like MonadState (ServerState Network.Socket) m here
--- (MonadSocket m s, MonadState m (ServerState s)) => .... -> m ()
--- StateT m (ServerState s) a
 evaluateMessage :: (Eq (Server.Socket s), MonadSocket m s) => 
   Server.Socket s -> 
   UserName -> 
@@ -115,7 +112,7 @@ evaluateMessage sckt uname msg st =
         let sckt = M.lookup uname (userToSocket st) in
         case (sckt, channel) of
           (Just s, Just c) -> do
-            -- remove user from state
+            -- Remove user from state.
             let usersInChannel = M.lookup c (channelToUser st)
             case usersInChannel of
               Just users -> 
@@ -128,17 +125,15 @@ evaluateMessage sckt uname msg st =
                 return st
           _ -> do
             return st
-      Cmd c -> undefined -- TODO, after checkpoint 2?
+      Cmd c -> undefined -- TODO, after checkpoint 2.
 
 -- Evaluate a command sent by this client and update the state.
 -- Has a side effect of writing out to clients the data associated with the command.
--- TODO: Add a constraint like MonadState (ServerState Network.Socket) m here
 evaluateCommand :: MonadSocket m (Server.Socket s) => UserName -> Command -> ServerState s -> m (ServerState s)
 evaluateCommand = undefined
 
 -- Send a message to an entire channel.
 -- The sender of the message is given as a parameter.
--- TODO: Add a constraint like MonadState (ServerState Network.Socket) m here
 sendToChannel :: MonadSocket m s => Proxy s -> UserName -> String -> Channel -> ServerState s -> m ()
 sendToChannel _ uname str c st = do
   let recvs = M.lookup c (channelToUser st)
@@ -182,7 +177,6 @@ readLoop st s = do
 -- Repeatedly accept connections and fork a new thread to read from them.
 mainLoop :: MonadSocket IO NS.Socket => (MVar (ServerState Network.Socket)) -> Network.Socket -> IO ()
 mainLoop st s = do
-  -- Related TODO, make the ServerState be a monadic state so our lives are easier
   (s', _) <- NS.accept s
   _ <- forkIO (readLoop st s')
   -- todo close done threads?

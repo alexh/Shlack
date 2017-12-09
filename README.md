@@ -1,0 +1,1 @@
+We did not use a state monad for the SeverState because the ServerState is already contained in an MVar, and the MVar supports state-like functions. Therefore, it'd be an unnecessary and unuseful to add an extra abstraction.
