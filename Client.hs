@@ -2,7 +2,7 @@
   TypeFamilies, FlexibleContexts
 #-}
 
-module Client where
+module Main where
 
 import Network
 import Control.Concurrent
@@ -73,12 +73,13 @@ clientLoop sock = do
     -- cursorDown 1
     maybeMsg <- return $ parseInput input
     case maybeMsg of
-        Just msg -> 
+        Just msg ->
             let serialMsg = serializeMessage msg in
             do
                 hPutStr sock (serialMsg ++ "\n")
                 hFlush sock
-                clientLoop sock
+                if msg == Logout then return ()
+                    else clientLoop sock
         Nothing -> return ()
 
 
@@ -86,6 +87,7 @@ parseIP :: String -> String
 parseIP ip = case ip of
     "" -> "192.168.1.190"
     -- "" -> "192.168.1.83" 
+    -- "" -> "158.130.173.150"
     s -> s
 
 readLoop :: Handle -> IO ()
