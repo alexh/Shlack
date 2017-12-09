@@ -89,7 +89,7 @@ evaluateMessage :: (Eq (Server.Socket s), MonadSocket m s) =>
   m (ServerState s)
 evaluateMessage sckt uname msg st =
   case msg of
-      TextData str -> 
+      TextData str -> -- TODO, don't send messages to users being ignored
         let channel = M.lookup uname (userToChannel st) in
         case channel of
           Just c -> do
