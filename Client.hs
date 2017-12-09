@@ -65,13 +65,35 @@ local = "127.0.0.1"
 client :: HostName -> PortID -> IO Handle
 client = connectTo
 
-clientLoop :: Handle -> String -> IO ()
-clientLoop sock user = do
+actOnMessage msg sock user chnl = 
+    case msg of
+        Cmd (JoinChannel c) -> do
+            chnlName <- takeMVar chnl
+            putMVar chnl c
+            writeDivider (Just c)
+            clientLoop sock user chnl
+        _ -> do
+            chnlName <- takeMVar chnl
+            putMVar chnl chnlName
+            writeDivider (Just chnlName)
+            clientLoop sock user chnl
+
+updateState maybeMsg chnl = do
+    case maybeMsg of
+        Just (Cmd (JoinChannel chnlName)) ->
+            putMVar chnl chnlName
+        _ -> do
+        chnlName <- takeMVar chnl
+        putMVar chnl chnlName
+
+
+clientLoop :: Handle -> String -> MVar String -> IO ()
+clientLoop sock user chnl = do
     input <- getLine
     if input == "" then do
         scrollPageDown 1
         hFlush stdout
-        clientLoop sock user else do
+        clientLoop sock user chnl else do
     cursorUp 2
     hFlush stdout
     clearFromCursorToLineEnd
@@ -84,36 +106,44 @@ clientLoop sock user = do
     hFlush stdout
     setCursorColumn 0
     hFlush stdout
-    writeDivider
     maybeMsg <- return $ parseInput input
+    hFlush stdout
     case maybeMsg of
         Just msg ->
             let serialMsg = serializeMessage msg in
             do
                 hPutStr sock serialMsg
                 hFlush sock
-                if msg == Logout then
-                    return ()
-                    else clientLoop sock user
-        Nothing -> clientLoop sock user
+                actOnMessage msg sock user chnl
+        Nothing -> clientLoop sock user chnl
 
 
 parseIP :: String -> String
 parseIP ip = case ip of
-    -- "" -> "192.168.1.190"
-    "" -> "192.168.1.83" 
+    "" -> "192.168.1.190"
+    -- "" -> "192.168.1.83" 
     s -> s
 
-writeDivider :: IO ()
-writeDivider = do
+writeDivider :: Maybe String -> IO ()
+writeDivider channel = 
+    do
+    setSGR [SetConsoleIntensity BoldIntensity]
+    hFlush stdout
     setSGR [SetColor Foreground Dull Yellow]
-    putStrLn "-----------------------------------"
+    case channel of
+        Nothing ->
+            putStrLn "-----------------------------------"
+        Just chnl ->
+            let len = dividerLength - 2 - (length chnl) in
+            putStrLn ("[" ++  chnl ++ "]" ++ (replicate len '-') )
     hFlush stdout
     setSGR [SetColor Foreground Dull White]
     hFlush stdout
+    setSGR [SetConsoleIntensity NormalIntensity]
+    hFlush stdout
 
-readLoop :: Handle -> IO ()
-readLoop sock = do
+readLoop :: Handle -> MVar String -> IO ()
+readLoop sock chnl = do
     line <- hGetLine sock
     -- threadDelay 1000000
     setSGR [SetColor Foreground Dull Blue]
@@ -128,8 +158,10 @@ readLoop sock = do
     -- threadDelay 1000000
     putStrLn line
     hFlush stdout
-    writeDivider
-    readLoop sock
+    chnlName <- takeMVar chnl
+    putMVar chnl chnlName
+    writeDivider (Just chnlName)
+    readLoop sock chnl
 
 printServerNotification :: String -> IO ()
 printServerNotification str = do
@@ -158,7 +190,7 @@ printWelcomeMessage user = do
     putStrLn "    ▓▓▓▓▌ ▐▓▓▓▓▓▓▓`    ▀▀▀▀▀▀  ▀▀    ▀▀  ▀▀  ▀▀    ▀▀▀ '▀▀▀▀▀  ▀▀    ▀▀`"
     putStrLn "     ▀▓▓▓▓▓▓▓▓▀▀ "
     putStrLn ""
-    writeDivider
+    writeDivider Nothing
 -- Main entry point for client.
 main :: IO ()
 main = do
@@ -173,9 +205,10 @@ main = do
     printWelcomeMessage username
     hPutStr sock (serializeMessage (Login username))
     hFlush sock
-    _ <- forkIO (readLoop sock)
-    writeDivider
-    clientLoop sock username
+    chnlState <- newMVar defaultChannel
+    _ <- forkIO (readLoop sock chnlState)
+    writeDivider (Just defaultChannel)
+    clientLoop sock username chnlState
 
     -- Open socket to Server
     -- Loop:

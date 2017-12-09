@@ -95,16 +95,16 @@ evaluateMessage sckt uname msg st =
           Nothing -> do
             return st
       Login inputName ->
-        let channel = M.lookup "defaultChannel" (channelToUser st) in
+        let channel = M.lookup defaultChannel (channelToUser st) in
         case channel of
           Just c -> do
-            return (st { userToChannel = M.insert inputName "defaultChannel" (userToChannel st),
-                         channelToUser = M.insert "defaultChannel" (inputName : c) (channelToUser st),
+            return (st { userToChannel = M.insert inputName defaultChannel (userToChannel st),
+                         channelToUser = M.insert defaultChannel (inputName : c) (channelToUser st),
                          userToSocket = M.insert inputName sckt (userToSocket st),
                          socketToUser = (sckt, inputName) : socketToUser st })
           Nothing -> do
-            return (st { userToChannel = M.insert inputName "defaultChannel" (userToChannel st),
-                         channelToUser = M.insert "defaultChannel" [inputName] (channelToUser st),
+            return (st { userToChannel = M.insert inputName defaultChannel (userToChannel st),
+                         channelToUser = M.insert defaultChannel [inputName] (channelToUser st),
                          userToSocket = M.insert inputName sckt (userToSocket st),
                          socketToUser = (sckt, inputName) : socketToUser st })
       Logout ->
