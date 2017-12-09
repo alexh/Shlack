@@ -12,6 +12,12 @@ import System.IO
 delim :: String
 delim = "%^%"
 
+defaultChannel :: String
+defaultChannel = "General"
+
+dividerLength :: Int
+dividerLength = 35
+
 -- Type of usernames.
 type UserName = String
 
