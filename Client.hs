@@ -73,6 +73,8 @@ actOnMessage msg sock user chnl =
             putMVar chnl c
             writeDivider (Just c)
             clientLoop sock user chnl
+        Logout -> do
+            return ()
         _ -> do
             chnlName <- takeMVar chnl
             putMVar chnl chnlName
@@ -107,7 +109,7 @@ clientLoop sock user chnl = do
     hFlush stdout
     setCursorColumn 0
     hFlush stdout
-    
+
     maybeMsg <- return $ parseInput input
     hFlush stdout
     case maybeMsg of
@@ -176,19 +178,21 @@ writeReply reply = case reply of
 
 readLoop :: Handle -> MVar String -> IO ()
 readLoop sock chnl = do
-    line <- hGetLine sock
-    cursorUp 1
-    hFlush stdout
-    setCursorColumn 0
-    hFlush stdout
-    clearFromCursorToLineEnd
-    hFlush stdout
-    writeReply (parseServerReply line)
-    hFlush stdout
-    chnlName <- takeMVar chnl
-    putMVar chnl chnlName
-    writeDivider (Just chnlName)
-    readLoop sock chnl
+    isDone <- hIsEOF sock
+    if isDone then return () else do
+        line <- hGetLine sock
+        cursorUp 1
+        hFlush stdout
+        setCursorColumn 0
+        hFlush stdout
+        clearFromCursorToLineEnd
+        hFlush stdout
+        writeReply (parseServerReply line)
+        hFlush stdout
+        chnlName <- takeMVar chnl
+        putMVar chnl chnlName
+        writeDivider (Just chnlName)
+        readLoop sock chnl
 
 printServerNotification :: String -> IO ()
 printServerNotification str = do

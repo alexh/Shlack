@@ -137,6 +137,12 @@ evaluateMessage sckt uname msg st =
             return st
       Cmd c -> evaluateCommand uname c st
 
+prettyPrintList :: Show a => [a] -> String
+prettyPrintList = helper "" where
+  helper acc [x] = acc ++ (show x)
+  helper acc (x : xs) = helper (acc ++ (show x) ++ ", ") xs
+  helper acc [] = acc
+
 -- Evaluate a command sent by this client and update the state.
 -- Has a side effect of writing out to clients the data associated with the command.
 evaluateCommand :: MonadSocket m s => UserName -> Command -> ServerState s -> m (ServerState s)
@@ -169,7 +175,8 @@ evaluateCommand uname cmd st =
           return st
         Nothing -> return st
     ListUsers -> do
-      sendToUser Proxy False "" uname (show (M.keys (userToChannel st)) ++ "\n") st
+      let users = M.keys (userToChannel st)
+      sendToUser Proxy False "" uname (prettyPrintList users ++ "\n") st
       return st
     ListChannels -> do
       sendToUser Proxy False "" uname (show (M.keys (channelToUser st)) ++ "\n") st
