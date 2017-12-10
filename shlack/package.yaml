@@ -39,7 +39,7 @@ executables:
     - ansi-terminal
 
   server:
-    main:                Server.hs
+    main:                Main.hs
     source-dirs:         server
     ghc-options:
     - -threaded

@@ -41,8 +41,7 @@ data ServerState s = ServerState {
   socketToUser :: [(Server.Socket s, UserName)], -- no Ord instance for our sockets
   userToSocket :: M.Map UserName (Server.Socket s),
   channelToUser :: M.Map Channel [UserName],
-  userToChannel :: M.Map UserName Channel,
-  ignoredUsers :: M.Map UserName [UserName]
+  userToChannel :: M.Map UserName Channel
 }
 
 -- Monadic actions for interacting with sockets. Boundedly polymorphic in type of socket.
@@ -130,8 +129,7 @@ evaluateMessage sckt uname msg st =
                 return (st { userToChannel = M.delete uname (userToChannel st),
                               channelToUser = M.insert c (L.delete uname (users)) (channelToUser st),
                               userToSocket = M.delete uname (userToSocket st),
-                              socketToUser = L.delete (s, uname) (socketToUser st),
-                              ignoredUsers = removeIgnoredUser uname (ignoredUsers st) })
+                              socketToUser = L.delete (s, uname) (socketToUser st) })
               _ -> do
                 return st
           _ -> do
@@ -238,8 +236,8 @@ mainLoop st s = do
   mainLoop st s
 
 -- Main entry point for server.
-main :: MonadSocket IO NS.Socket => IO ()
-main = do
+serverMain :: MonadSocket IO NS.Socket => IO ()
+serverMain = do
   sckt <- socket AF_INET Stream defaultProtocol
   setSocketOption sckt ReuseAddr 1
   bind sckt (SockAddrInet 4040 iNADDR_ANY)
