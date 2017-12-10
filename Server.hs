@@ -64,9 +64,11 @@ parseMessage str =
   let parts = splitOn delim str in
   case parts of
     p1 : p2 : p3 : [] -> case p1 of
+      -- at least two delimeters
       "Whisper" -> Cmd $ Whisper p2 p3
       _ -> TextData "parse error"
     p1 : p2 : [] -> case p1 of
+      -- at least one delimeter
       "Message" -> TextData p2
       "Login" -> Login p2
       "Join" -> Cmd $ JoinChannel p2
@@ -75,6 +77,7 @@ parseMessage str =
       -- no delimeter
       "Logout" -> Logout
       "ListChannels" -> Cmd ListChannels
+      "ListUsers" -> Cmd ListUsers
       _ -> TextData "parse error"
 
 -- Removes this user from the given map of ignoredUsers.
@@ -93,7 +96,7 @@ evaluateMessage :: (Eq (Server.Socket s), MonadSocket m s) =>
   m (ServerState s)
 evaluateMessage sckt uname msg st =
   case msg of
-      TextData str -> -- TODO, don't send messages to users being ignored
+      TextData str -> 
         let channel = M.lookup uname (userToChannel st) in
         case channel of
           Just c -> do
@@ -165,11 +168,14 @@ evaluateCommand uname cmd st =
           sendToUser Proxy True uname receiver msg st
           return st
         Nothing -> return st
-    ListUsers -> undefined
+    ListUsers -> do
+      sendToUser Proxy False "" uname (show (M.keys (userToChannel st)) ++ "\n") st
+      return st
     ListChannels -> do
       sendToUser Proxy False "" uname (show (M.keys (channelToUser st)) ++ "\n") st
       return st
-    Help -> undefined
+    Help -> return st -- clients specify their help messages, cheaper than
+    -- sending the message over the network
 
 -- Send a message to an entire channel.
 -- The sender of the message is given as a parameter.
