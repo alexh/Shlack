@@ -26,7 +26,7 @@ parseInput str =
         p : [] -> case p of
             '/' : cmd -> case cmd of
                 "listchannels" -> Just $ Cmd $ ListChannels
-                "listusers" -> Jsut $ Cmd $ ListUsers
+                "listusers" -> Just $ Cmd $ ListUsers
                 "help" -> Just $ Cmd $ Help
                 _ -> Nothing
             text -> Just $ TextData text
@@ -79,7 +79,7 @@ actOnMessage msg sock user chnl =
             writeDivider (Just chnlName)
             clientLoop sock user chnl
 
-updateState maybeMsg chnl = do
+updateState maybeMsg chnl =
     case maybeMsg of
         Just (Cmd (JoinChannel chnlName)) ->
             putMVar chnl chnlName
@@ -107,6 +107,7 @@ clientLoop sock user chnl = do
     hFlush stdout
     setCursorColumn 0
     hFlush stdout
+    
     maybeMsg <- return $ parseInput input
     hFlush stdout
     case maybeMsg of
@@ -121,8 +122,8 @@ clientLoop sock user chnl = do
 
 parseIP :: String -> String
 parseIP ip = case ip of
-    -- "" -> "192.168.1.190"
-    "" -> "192.168.1.83" 
+    "" -> "192.168.1.190"
+    -- "" -> "192.168.1.83" 
     s -> s
 
 writeDivider :: Maybe String -> IO ()
@@ -139,25 +140,50 @@ writeDivider channel =
             putStrLn ("[" ++  chnl ++ "]" ++ (replicate len '-') )
     hFlush stdout
     setSGR [SetColor Foreground Dull White]
-    hFlush stdout
     setSGR [SetConsoleIntensity NormalIntensity]
     hFlush stdout
+
+data Reply = RPublic String
+             | RWhisper String
+             | RServer String
+
+parseServerReply :: String -> Reply
+parseServerReply msg = 
+    let splits@(mode : str : xs) = splitOn delim msg in
+    if (length splits == 2) then
+        case mode of
+            "W" -> RWhisper str
+            "P" -> RPublic str
+            "S" -> RServer str
+            _   -> RPublic str
+    else RPublic msg
+
+writeReply :: Reply -> IO ()
+writeReply reply = case reply of
+    RPublic str -> do
+        setSGR [SetColor Foreground Dull Blue]
+        putStrLn str
+        setSGR [SetColor Foreground Dull White]
+    RWhisper str -> do
+        setSGR [SetColor Foreground Dull Magenta]
+        putStrLn str
+        setSGR [SetColor Foreground Dull White]
+    RServer str -> do
+        setSGR [SetColor Foreground Dull Green]
+        putStrLn str
+        setSGR [SetColor Foreground Dull White]
+
 
 readLoop :: Handle -> MVar String -> IO ()
 readLoop sock chnl = do
     line <- hGetLine sock
-    -- threadDelay 1000000
-    setSGR [SetColor Foreground Dull Blue]
     cursorUp 1
     hFlush stdout
-    -- threadDelay 1000000
     setCursorColumn 0
     hFlush stdout
     clearFromCursorToLineEnd
     hFlush stdout
-    -- threadDelay 3000000
-    -- threadDelay 1000000
-    putStrLn line
+    writeReply (parseServerReply line)
     hFlush stdout
     chnlName <- takeMVar chnl
     putMVar chnl chnlName
@@ -219,3 +245,4 @@ main = do
         --  Parse stdin
         --  Serialize message
         --- Send message over socket
+        -- threadDelay 1000000
