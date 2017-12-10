@@ -17,26 +17,28 @@ import Model
 parseInput :: String -> Maybe Message
 -- parseInput str = return $ Just $ TextData str
 parseInput str =
-    if length str == 0 then Nothing else
-    if str == "logout" then Just $ Logout else
-    let msg = str in
-    let parts = splitOn " " msg in
-    case parts of
-        "/whisper" : p2 : rest -> Just $ Cmd $ Whisper p2 (unwords rest)
-        p : [] -> case p of
-            '/' : cmd -> case cmd of
-                "listchannels" -> Just $ Cmd $ ListChannels
-                "listusers" -> Just $ Cmd $ ListUsers
-                "help" -> Just $ Cmd $ Help
-                _ -> Nothing
-            text -> Just $ TextData text
-        p : ps ->
-            case p of
-                '/' : cmd -> case cmd of
-                    "join" -> Just $ Cmd $ JoinChannel (concat ps)
-                    _ -> Nothing
-                _ -> Just $ TextData msg
-        _ -> Nothing
+    case str of
+        "" -> Nothing
+        "logout" -> Nothing
+        _ ->
+            let msg = str in
+            let parts = splitOn " " msg in
+            case parts of
+                "/whisper" : p2 : rest -> Just $ Cmd $ Whisper p2 (unwords rest)
+                p : [] -> case p of
+                    '/' : cmd -> case cmd of
+                        "listchannels" -> Just $ Cmd $ ListChannels
+                        "listusers" -> Just $ Cmd $ ListUsers
+                        "help" -> Just $ Cmd $ Help
+                        _ -> Nothing
+                    text -> Just $ TextData text
+                p : ps ->
+                    case p of
+                        '/' : cmd -> case cmd of
+                            "join" -> Just $ Cmd $ JoinChannel (concat ps)
+                            _ -> Nothing
+                        _ -> Just $ TextData msg
+                _ -> Just $ TextData str
 
     -- Use applicative parsing similar to HW06
 
@@ -93,14 +95,19 @@ updateState maybeMsg chnl =
 clientLoop :: Handle -> String -> MVar String -> IO ()
 clientLoop sock user chnl = do
     input <- getLine
+    -- threadDelay 1000000
     if input == "" then do
         scrollPageDown 1
         hFlush stdout
         clientLoop sock user chnl else do
+    -- threadDelay 1000000
     cursorUp 2
+    -- threadDelay 1000000
     hFlush stdout
+    -- threadDelay 1000000
     clearFromCursorToLineEnd
     hFlush stdout
+    -- threadDelay 1000000
     setSGR [SetColor Foreground Dull Cyan]
     putStr (user ++ ": " ++ input)
     hFlush stdout
@@ -110,8 +117,7 @@ clientLoop sock user chnl = do
     setCursorColumn 0
     hFlush stdout
 
-    maybeMsg <- return $ parseInput input
-    hFlush stdout
+    let maybeMsg = parseInput input
     case maybeMsg of
         Just msg ->
             let serialMsg = serializeMessage msg in
@@ -119,7 +125,11 @@ clientLoop sock user chnl = do
                 hPutStr sock serialMsg
                 hFlush sock
                 actOnMessage msg sock user chnl
-        Nothing -> clientLoop sock user chnl
+        Nothing -> do
+            chnlName <- takeMVar chnl
+            putMVar chnl chnlName
+            writeDivider (Just chnlName)
+            clientLoop sock user chnl
 
 
 parseIP :: String -> String
