@@ -155,10 +155,16 @@ evaluateCommand uname cmd st =
                            channelToUser = M.insert newChannel [uname] oldMap })
             _ -> return st
         Nothing -> return st
-    Whisper receiver msg -> undefined
-    Ignore receiver -> undefined -- todo, do we care about doing this?
+    Whisper receiver msg ->
+      let currC = M.lookup uname (userToChannel st) in
+      case currC of
+        Just currChannel -> do
+          sendToUser Proxy True uname receiver msg st
+          return st
+        Nothing -> return st
+    ListUsers -> undefined
     ListChannels -> do
-      sendToUser Proxy "" uname (show (M.keys (channelToUser st)) ++ "\n") st
+      sendToUser Proxy False "" uname (show (M.keys (channelToUser st)) ++ "\n") st
       return st
     Help -> undefined
 
@@ -169,21 +175,23 @@ sendToChannel _ uname str c st = do
   let recvs = M.lookup c (channelToUser st)
   case recvs of
     Just receivers -> do
-      mapM_ (\receiver -> sendToUser Proxy uname receiver str st) receivers
+      mapM_ (\receiver -> sendToUser Proxy False uname receiver str st) receivers
     Nothing -> return ()
 
 -- Send a message to a single user.
 -- Sender of message given as a parameter. Use "" if server is the sender.
-sendToUser :: MonadSocket m s => Proxy s -> UserName -> UserName -> String -> ServerState s -> m ()
-sendToUser _ sender receiver str st = do {
+sendToUser :: MonadSocket m s => Proxy s -> Bool -> UserName -> UserName -> String -> ServerState s -> m ()
+sendToUser _ isWhisper sender receiver str st = do {
   let receiverSocket = M.lookup receiver (userToSocket st) in
   case receiverSocket of
     Just rSckt ->
       if sender == receiver
         then return () 
         else if sender == ""
-          then Server.sendTo rSckt str
-          else Server.sendTo rSckt (sender ++ ": " ++ str ++ "\n")
+          then Server.sendTo rSckt ("S" ++ delim ++ str)
+          else 
+            let pref = if isWhisper then "W" ++ delim else "P" ++ delim in
+            Server.sendTo rSckt (pref ++ sender ++ ": " ++ str ++ "\n")
     Nothing -> return ()
   }
 

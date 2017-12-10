@@ -35,7 +35,7 @@ data Message = TextData String
 -- Slash commands are the main mechanism for non-chat interaction with the server.
 data Command = JoinChannel Channel
              | Whisper UserName String
-             | Ignore UserName
+             | ListUsers
              | ListChannels
              | Help
  deriving (Show, Eq)
