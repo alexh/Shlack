@@ -1,5 +1,7 @@
 -write tests with mock monad for server
+    -
 -make project into stack project so we can build 2 binaries
+-clean up code (commented out code, todos, etc)
 -try lots of clients (test thread limit)
 -figure out how to fix overwriting of user input (if we have time)
 -write in signal handlers for sigint, sigterm, etc. (if we have time)
