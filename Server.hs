@@ -63,6 +63,9 @@ parseMessage :: String -> Message
 parseMessage str =
   let parts = splitOn delim str in
   case parts of
+    p1 : p2 : p3 : [] -> case p1 of
+      "Whisper" -> Cmd $ Whisper p2 p3
+      _ -> TextData "parse error"
     p1 : p2 : [] -> case p1 of
       "Message" -> TextData p2
       "Login" -> Login p2
