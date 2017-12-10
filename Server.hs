@@ -77,6 +77,7 @@ parseMessage str =
       -- no delimeter
       "Logout" -> Logout
       "ListChannels" -> Cmd ListChannels
+      "Help" -> Cmd Help
       "ListUsers" -> Cmd ListUsers
       _ -> TextData "parse error"
 
@@ -171,7 +172,7 @@ evaluateCommand uname cmd st =
       let currC = M.lookup uname (userToChannel st) in
       case currC of
         Just currChannel -> do
-          sendToUser Proxy True uname receiver msg st
+          sendToUser Proxy True uname receiver ("[" ++ currChannel ++ "] " ++ msg) st
           return st
         Nothing -> return st
     ListUsers -> do

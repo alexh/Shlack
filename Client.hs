@@ -124,8 +124,8 @@ clientLoop sock user chnl = do
 
 parseIP :: String -> String
 parseIP ip = case ip of
-    "" -> "192.168.1.190"
-    -- "" -> "192.168.1.83" 
+    -- "" -> "192.168.1.190"
+    "" -> "192.168.1.83" 
     s -> s
 
 writeDivider :: Maybe String -> IO ()
@@ -222,6 +222,7 @@ printWelcomeMessage user = do
     putStrLn "     ▀▓▓▓▓▓▓▓▓▀▀ "
     putStrLn ""
     writeDivider Nothing
+    
 -- Main entry point for client.
 main :: IO ()
 main = do

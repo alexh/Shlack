@@ -4,6 +4,7 @@
 
 module ServerTesting where
 
+import qualified Data.List as L
 import qualified Data.Map as M
 import Control.Monad.State as S
 import Test.HUnit
@@ -14,45 +15,10 @@ import Server
 injectSocketData :: AbstractSocket -> String -> AbstractSocket
 injectSocketData = undefined
 
--- TODO: Use state monad for the monad in this instance.
+-- The monad socket implementation for abstract sockets.
 instance MonadSocket Maybe AbstractSocket where
-  readFrom s = Just (TextData (getSocketData s))
-  sendTo s m = Just () -- succeed silently
-
--- TODO: remove this potentially? Use the evaluation functions from Server instead
-serverIter :: (MonadSocket m AbstractSocket, MonadState (ServerState AbstractSocket) m)
-           => AbstractSocket
-           -> m ()
-serverIter sock = do
-  msg <- readFrom sock
-  case msg of
-    TextData s ->
-      -- Send the message to all sockets with connected users in this channel.
-      return ()
-    Login u ->
-      -- Add the user to the chat platform. User should start in a default "general" channel.
-      return ()
-    Logout ->
-      -- Remove the user from their channel and close the client.
-      return ()
-    Cmd c ->
-      -- Note that the sender of messages will be identified by the socket they are connected to.
-      case c of
-        JoinChannel ch ->
-          -- Remove the user from their current channel and put them in the new channel.
-          return ()
-        Whisper name str ->
-          -- Send this message privately to the destination user.
-          return ()
-        Ignore name ->
-          -- Mark that all messages sent by this user should not be seen by the sender.
-          return ()
-        ListChannels ->
-          -- Output all channels to sender.
-          return ()
-        Help ->
-          -- Output helpful information to the sender about how to use the platform.
-          return ()
+  readFrom (AbsSocket s) = Just (TextData (getSocketData s))
+  sendTo (AbsSocket s) m = Just () -- succeed silently
 
 -- Example of a test suite for server actions.
 -- TODO, how do you use do notation in a unit test?
@@ -64,12 +30,19 @@ testServer = TestList []
 -- Mini test suite for the parseMessage function.
 testParseMessage :: Test
 testParseMessage = TestList [
-    parseMessage "Join,channel1" ~?= Cmd (JoinChannel "channel1"),
-    parseMessage "Message,pizza" ~?= TextData "pizza",
-    parseMessage "Login,alex" ~?= Login "alex",
-    parseMessage "Disconnect" ~?= Cmd Disconnect,
+    parseMessage (L.intercalate delim ["Join", "channel1"]) ~?= Cmd (JoinChannel "channel1"),
+    parseMessage (L.intercalate delim ["Message", "pizza"]) ~?= TextData "pizza",
+    parseMessage (L.intercalate delim ["Login", "alex"]) ~?= Login "alex",
+    parseMessage "Logout" ~?= Logout,
     parseMessage "ListChannels" ~?= Cmd ListChannels,
     parseMessage "Help" ~?= Cmd Help,
-    parseMessage "Ignore,alex" ~?= Cmd (Ignore "alex"),
-    parseMessage "Whisper,alex,hey dad" ~?= Cmd (Whisper "alex" "hey dad")]
+    parseMessage "ListUsers" ~?= Cmd ListUsers,
+    parseMessage (L.intercalate delim ["Whisper", "alex", "hey dad"]) ~?= Cmd (Whisper "alex" "hey dad")]
+
+-- Entry point for testing.
+main :: IO ()
+main = do
+  _ <- runTestTT (TestList [
+          testParseMessage])
+  return ()
     
