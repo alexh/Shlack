@@ -26,6 +26,7 @@ parseInput str =
         p : [] -> case p of
             '/' : cmd -> case cmd of
                 "listchannels" -> Just $ Cmd $ ListChannels
+                "listusers" -> Jsut $ Cmd $ ListUsers
                 "help" -> Just $ Cmd $ Help
                 _ -> Nothing
             text -> Just $ TextData text
@@ -33,7 +34,6 @@ parseInput str =
             case p of
                 '/' : cmd -> case cmd of
                     "join" -> Just $ Cmd $ JoinChannel (concat ps)
-                    "ignore" -> Just $ Cmd $ Ignore(concat ps)
                     _ -> Nothing
                 _ -> Just $ TextData msg
         _ -> Nothing
@@ -53,8 +53,8 @@ serializeCommand :: Command -> String
 serializeCommand cmd = case cmd of 
     JoinChannel channel -> "Join" ++ delim ++ channel
     Whisper user msg -> "Whisper" ++ delim ++ user ++ delim ++ msg
-    Ignore user -> "Ignore" ++ delim ++ user
     ListChannels -> "ListChannels"
+    ListUsers -> "ListUsers"
     Help -> "Help"
 
 -- | IP address of the local host
