@@ -171,11 +171,11 @@ evaluateCommand uname cmd st =
         Nothing -> return st
     ListUsers -> do
       let users = M.keys (userToChannel st)
-      sendToUser Proxy False "" uname ((intercalate ", " users) ++ "\n") st
+      sendToUser Proxy False "" uname ("[Server]: " ++ (intercalate ", " users) ++ "\n") st
       return st
     ListChannels -> do
       let channels = M.keys (channelToUser st)
-      sendToUser Proxy False "" uname ((intercalate ", " channels) ++ "\n") st
+      sendToUser Proxy False "" uname ("[Server]: " ++ (intercalate ", " channels) ++ "\n") st
       return st
     Help -> return st -- clients specify their help messages, cheaper than
     -- sending the message over the network

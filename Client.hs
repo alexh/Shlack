@@ -19,7 +19,7 @@ parseInput :: String -> Maybe Message
 parseInput str =
     case str of
         "" -> Nothing
-        "logout" -> Nothing
+        "logout" ->  Just $ Logout
         _ ->
             let msg = str in
             let parts = splitOn " " msg in
