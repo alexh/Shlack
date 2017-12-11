@@ -245,7 +245,6 @@ serverMain = do
   let st = ServerState {socketToUser = [], 
                         userToSocket = M.empty, 
                         channelToUser = M.empty, 
-                        userToChannel = M.empty, 
-                        ignoredUsers = M.empty}
+                        userToChannel = M.empty}
   mst <- newMVar st
   mainLoop mst sckt
