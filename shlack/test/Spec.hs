@@ -1,2 +1,9 @@
+import ServerTesting
+import ClientTesting
+
 main :: IO ()
-main = putStrLn "Test suite not yet implemented"
+main = do
+    putStrLn "Client tests"
+    ClientTesting.main
+    putStrLn "Server tests"
+    ServerTesting.main

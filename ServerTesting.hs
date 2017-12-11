@@ -6,7 +6,6 @@ module ServerTesting where
 
 import qualified Data.List as L
 import qualified Data.Map.Strict as M
-import Control.Monad.State as S
 import Test.HUnit
 import Model
 import Server

@@ -34,3 +34,10 @@ testSerializeMessage = TestList [
     serializeMessage (Cmd Help) ~?= "Help",
     serializeMessage (Cmd $ Ignore "alex") ~?= "Ignore,alex",
     serializeMessage (Cmd $ Whisper "alex" "hey dad") ~?= "Whisper,alex,hey dad"]
+
+-- Entry point for testing.
+main :: IO ()
+main = do
+  _ <- runTestTT (TestList [
+          testParseInput, testSerializeMessage ])
+  return ()
