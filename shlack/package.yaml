@@ -61,3 +61,6 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - shlack
+    - containers
+    - HUnit
+
