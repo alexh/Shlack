@@ -136,7 +136,8 @@ clientLoop sock user chnl = do
 parseIP :: String -> String
 parseIP ip = case ip of
     -- "" -> "192.168.1.190"
-    "" -> "192.168.1.83" 
+    -- "" -> "192.168.1.83" 
+    "" -> "10.215.174.126"
     s -> s
 
 writeDivider :: Maybe String -> IO ()
