@@ -25,10 +25,15 @@ dependencies:
 
 library:
   source-dirs: lib
+  dependencies:
+    - ansi-terminal
+    - containers
+    - bytestring
+    - transformers >= 0.5.2.0
 
 executables:
   client:
-    main:                Client.hs
+    main:                Main.hs
     source-dirs:         client
     ghc-options:
     - -threaded
@@ -36,7 +41,6 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - shlack
-    - ansi-terminal
 
   server:
     main:                Main.hs
@@ -47,9 +51,6 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - shlack
-    - containers
-    - bytestring
-    - transformers >= 0.5.2.0
 
 tests:
   shlack-test:
@@ -61,3 +62,5 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - shlack
+    - containers
+    - HUnit
