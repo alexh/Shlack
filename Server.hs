@@ -36,6 +36,11 @@ instance Eq (Server.Socket Network.Socket) where
 instance Eq (Server.Socket AbstractSocket) where
   (AbsSocket s1) == (AbsSocket s2) = s1 == s2
 
+-- And a show instance for abstract sockets.
+instance Show (Server.Socket AbstractSocket) where
+  show (AbsSocket s) = "socket id: " ++ show (getAbstractSocket s)
+    ++ " | socket data: " ++ getSocketData s
+
 -- State of the server. Boundedly polymorphic in the type of the socket for testing.
 data ServerState s = ServerState {
   socketToUser :: [(Server.Socket s, UserName)], -- no Ord instance for our sockets
