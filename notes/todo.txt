@@ -1,5 +1,1 @@
--write tests with mock monad for server
-    -use stateful IO monad (?) for the mock
 -REINSTALL GIT REPO IN FRESH DIRECTORY AND REBUILD!
--figure out how to fix overwriting of user input (if we have time)
--write in signal handlers for sigint, sigterm, etc. (if we have time)

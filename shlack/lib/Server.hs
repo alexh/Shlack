@@ -216,7 +216,7 @@ readLoop st s = do
     let s' = NetSocket s
     msg <- readFrom s'
     putStrLn ("ack: " ++ show msg)
-    ste <- takeMVar st -- TODO do a put after to avoid race condition?
+    ste <- takeMVar st
     let uname = lookup s' (socketToUser ste)
     case uname of
       Just name -> do
@@ -237,7 +237,6 @@ mainLoop :: MonadSocket IO NS.Socket => (MVar (ServerState Network.Socket)) -> N
 mainLoop st s = do
   (s', _) <- NS.accept s
   _ <- forkIO (readLoop st s')
-  -- TODO close done threads?
   mainLoop st s
 
 -- Main entry point for server.
