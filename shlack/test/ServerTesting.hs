@@ -61,10 +61,19 @@ aliceBobState =
                                 M.insert "Bob" "General"
                                 (M.insert "Alice" "General" M.empty)}
 
+-- Insert the given abstract socket into the list, or update the existing
+-- abstract socket in the list if there is one.
+updateSockets :: AbstractSocket -> [AbstractSocket] -> [AbstractSocket]
+updateSockets s l = 
+  let l' = map (\x -> if getAbstractSocket x == getAbstractSocket s then s else x) l in
+  if l == l' then s : l' else l'
+
 -- The monad socket implementation for abstract sockets.
 instance MonadSocket MockState AbstractSocket where
   readFrom (AbsSocket s) = return (parseMessage (getSocketData s))
-  sendTo (AbsSocket s) m = return () -- succeed silently
+  sendTo (AbsSocket s) str = do
+    lst <- get
+    put (updateSockets (injectSocketData s str) lst)
 
 -- An equality instance for ServerStates for testing.
 instance Eq (ServerState AbstractSocket) where
@@ -84,8 +93,8 @@ instance Show (ServerState AbstractSocket) where
 testOneLogin :: Test
 testOneLogin = TestCase (do
   let s = AbsSocket aliceLogin
-  msg <- readFrom s
-  newState <- evaluateMessage s "" msg emptyState
+  msg <- evalStateT (do readFrom s) [aliceLogin]
+  newState <- evalStateT (do evaluateMessage s "" msg emptyState) [aliceLogin]
   assertEqual "one login test" aliceState newState)
 
 -- testTwoLogins :: Test
@@ -131,6 +140,5 @@ testParseMessage = TestList [
 serverTestingMain :: IO ()
 serverTestingMain = do
   _ <- runTestTT (TestList [
-          testParseMessage, testOneLogin, testTwoLogins,
-          testOneLogout, testTwoLogouts])
+          testParseMessage, testOneLogin])
   return ()
