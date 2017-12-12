@@ -16,10 +16,6 @@ import Server
 -- data that can be read from it or was written to it.
 type MockState = StateT [AbstractSocket] IO
 
--- Inject new data into the socket for testing.
-injectSocketData :: AbstractSocket -> String -> AbstractSocket
-injectSocketData sck str = sck { getSocketData = str }
-
 -- The action of user Alice logging in.
 aliceLogin :: AbstractSocket 
 aliceLogin = AbstractSocket { getAbstractSocket = 1,
@@ -61,12 +57,22 @@ aliceBobState =
                                 M.insert "Bob" "General"
                                 (M.insert "Alice" "General" M.empty)}
 
+-- Inject new data into the socket for testing.
+injectSocketData :: AbstractSocket -> String -> AbstractSocket
+injectSocketData sck str = sck { getSocketData = str }
+
 -- Insert the given abstract socket into the list, or update the existing
 -- abstract socket in the list if there is one.
 updateSockets :: AbstractSocket -> [AbstractSocket] -> [AbstractSocket]
 updateSockets s l = 
   let l' = map (\x -> if getAbstractSocket x == getAbstractSocket s then s else x) l in
   if l == l' then s : l' else l'
+
+-- Get the string data out of the input socket in the list, or "" if there
+-- is no data.
+getSocket :: AbstractSocket -> [AbstractSocket] -> String
+getSocket sckt = foldr (\x acc -> if getAbstractSocket sckt == getAbstractSocket x then
+  getSocketData x else acc) ""
 
 -- The monad socket implementation for abstract sockets.
 instance MonadSocket MockState AbstractSocket where
@@ -96,6 +102,16 @@ testOneLogin = TestCase (do
   msg <- evalStateT (do readFrom s) [aliceLogin]
   newState <- evalStateT (do evaluateMessage s "" msg emptyState) [aliceLogin]
   assertEqual "one login test" aliceState newState)
+
+testChannelSend :: Test
+testChannelSend = TestCase (do
+  let s1 = AbsSocket aliceLogin
+  let s2 = AbsSocket bobLogin
+  let msg = TextData "hi bob"
+  mockState <- execStateT 
+    (do evaluateMessage s1 "Alice" msg aliceBobState) [aliceLogin, bobLogin]
+  let str = getSocket bobLogin mockState
+  assertEqual "send to channel" ("P" ++ delim ++ "Alice: hi bob\n") str)
 
 -- testTwoLogins :: Test
 -- testTwoLogins = TestCase (do
@@ -140,5 +156,5 @@ testParseMessage = TestList [
 serverTestingMain :: IO ()
 serverTestingMain = do
   _ <- runTestTT (TestList [
-          testParseMessage, testOneLogin])
+          testParseMessage, testOneLogin, testChannelSend])
   return ()
