@@ -64,3 +64,4 @@ tests:
     - shlack
     - containers
     - HUnit
+    - transformers >= 0.5.2.0

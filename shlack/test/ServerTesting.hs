@@ -6,9 +6,15 @@ module ServerTesting where
 
 import qualified Data.List as L
 import qualified Data.Map.Strict as M
+import Control.Monad.Trans.State.Lazy
 import Test.HUnit
 import Model
 import Server
+
+-- The state type for testing.
+-- The state is a list of sockets, where each socket stores the most recent
+-- data that can be read from it or was written to it.
+type MockState = StateT [AbstractSocket] IO
 
 -- Inject new data into the socket for testing.
 injectSocketData :: AbstractSocket -> String -> AbstractSocket
@@ -56,7 +62,7 @@ aliceBobState =
                                 (M.insert "Alice" "General" M.empty)}
 
 -- The monad socket implementation for abstract sockets.
-instance MonadSocket IO AbstractSocket where
+instance MonadSocket MockState AbstractSocket where
   readFrom (AbsSocket s) = return (parseMessage (getSocketData s))
   sendTo (AbsSocket s) m = return () -- succeed silently
 
@@ -82,32 +88,32 @@ testOneLogin = TestCase (do
   newState <- evaluateMessage s "" msg emptyState
   assertEqual "one login test" aliceState newState)
 
-testTwoLogins :: Test
-testTwoLogins = TestCase (do
-  let s1 = AbsSocket aliceLogin
-  let s2 = AbsSocket bobLogin
-  msg1 <- readFrom s1
-  msg2 <- readFrom s2
-  newState1 <- evaluateMessage s1 "" msg1 emptyState
-  newState2 <- evaluateMessage s2 "" msg2 newState1
-  assertEqual "two logins test" aliceBobState newState2)
+-- testTwoLogins :: Test
+-- testTwoLogins = TestCase (do
+--   let s1 = AbsSocket aliceLogin
+--   let s2 = AbsSocket bobLogin
+--   msg1 <- readFrom s1
+--   msg2 <- readFrom s2
+--   newState1 <- evaluateMessage s1 "" msg1 emptyState
+--   newState2 <- evaluateMessage s2 "" msg2 newState1
+--   assertEqual "two logins test" aliceBobState newState2)
 
-testOneLogout :: Test
-testOneLogout = TestCase (do
-  let logoutSock = AbsSocket (injectSocketData bobLogin "Logout")
-  msg <- readFrom logoutSock
-  newState <- evaluateMessage logoutSock "Bob" msg aliceBobState
-  assertEqual "one logout test" aliceState newState)
+-- testOneLogout :: Test
+-- testOneLogout = TestCase (do
+--   let logoutSock = AbsSocket (injectSocketData bobLogin "Logout")
+--   msg <- readFrom logoutSock
+--   newState <- evaluateMessage logoutSock "Bob" msg aliceBobState
+--   assertEqual "one logout test" aliceState newState)
 
-testTwoLogouts :: Test
-testTwoLogouts = TestCase (do
-  let logoutSock1 = AbsSocket (injectSocketData aliceLogin "Logout")
-  let logoutSock2 = AbsSocket (injectSocketData bobLogin "Logout")
-  msg1 <- readFrom logoutSock1
-  msg2 <- readFrom logoutSock2
-  newState1 <- evaluateMessage logoutSock1 "Alice" msg1 aliceBobState
-  newState2 <- evaluateMessage logoutSock2 "Bob" msg2 newState1
-  assertEqual "two logouts (all users) test" emptyState newState2)
+-- testTwoLogouts :: Test
+-- testTwoLogouts = TestCase (do
+--   let logoutSock1 = AbsSocket (injectSocketData aliceLogin "Logout")
+--   let logoutSock2 = AbsSocket (injectSocketData bobLogin "Logout")
+--   msg1 <- readFrom logoutSock1
+--   msg2 <- readFrom logoutSock2
+--   newState1 <- evaluateMessage logoutSock1 "Alice" msg1 aliceBobState
+--   newState2 <- evaluateMessage logoutSock2 "Bob" msg2 newState1
+--   assertEqual "two logouts (all users) test" emptyState newState2)
 
 -- Mini test suite for the parseMessage function.
 testParseMessage :: Test
