@@ -1,0 +1,29 @@
+-What are the main modules of your program? Why did you divide them up in this way?
+    -Model.hs exposes some common types shared between the client and server. These are
+    the types that represent our system.
+    -Server.hs contains the core server logic, including the definition of server
+    state and updating of state. It makes sense to keep this separate from Model
+    because it shouldn't be exposed to clients.
+    -ServerTesting.hs contains testing for the server.
+    -Client.hs contains the client logic, which is again separate from Model so that
+    it's not exposed to the server.
+    -ClientTesting.hs contains some test cases for the client.
+
+-Parts of code you're proud of
+    -The terminal logic in the client. We thought that haskell wouldn't be good for
+    such an imperative, low-level job but it still did pretty well and the result
+    looks nice.
+    -The generalization of the server logic to any monad and MonadSocket. Made
+    testing the server possible and easy. Took a lot of time here to think about
+    how the types work together.
+
+-Talked about in class
+    -State monad in server tester
+    -state transformer
+    -Uses of map and fold in server/server tester
+    -Use of GADTs
+    -parametric polymorphism
+    -using type classes
+
+-Scrap and redesign, what didn't work, hardest part to get right
+    -
