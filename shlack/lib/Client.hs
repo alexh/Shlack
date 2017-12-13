@@ -15,7 +15,6 @@ import Model
 
 -- Parses user input into a Message.
 parseInput :: String -> Maybe Message
--- parseInput str = return $ Just $ TextData str
 parseInput str =
     case str of
         "" -> Nothing
@@ -24,8 +23,10 @@ parseInput str =
             let msg = str in
             let parts = splitOn " " msg in
             case parts of
+                -- Special case for whisper because it can have n tokens
                 "/whisper" : p2 : rest -> Just $ Cmd $ Whisper p2 (unwords rest)
                 p : [] -> case p of
+                    -- Single token commands
                     '/' : cmd -> case cmd of
                         "listchannels" -> Just $ Cmd $ ListChannels
                         "listusers" -> Just $ Cmd $ ListUsers
@@ -34,13 +35,12 @@ parseInput str =
                     text -> Just $ TextData text
                 p : ps ->
                     case p of
+                        -- commands with 2 tokens
                         '/' : cmd -> case cmd of
                             "join" -> Just $ Cmd $ JoinChannel (concat ps)
                             _ -> Nothing
                         _ -> Just $ TextData msg
                 _ -> Just $ TextData str
-
-    -- Use applicative parsing similar to HW06
 
 -- Serializes messages into a friendly intermediate format to send to server.
 serializeMessage :: Message -> String
@@ -68,6 +68,7 @@ local = "127.0.0.1"
 client :: HostName -> PortID -> IO Handle
 client = connectTo
 
+-- Updates local state based on input
 actOnMessage msg sock user chnl = 
     case msg of
         Cmd (JoinChannel c) -> do
@@ -83,32 +84,22 @@ actOnMessage msg sock user chnl =
             writeDivider (Just chnlName)
             clientLoop sock user chnl
 
-updateState maybeMsg chnl =
-    case maybeMsg of
-        Just (Cmd (JoinChannel chnlName)) ->
-            putMVar chnl chnlName
-        _ -> do
-            chnlName <- takeMVar chnl
-            putMVar chnl chnlName
 
-
+-- Main loop of client, reads from stdin
+-- parses input, updates local state and 
+-- sends to server
 clientLoop :: Handle -> String -> MVar String -> IO ()
 clientLoop sock user chnl = do
     input <- getLine
-    -- threadDelay 1000000
     if input == "" then do
         scrollPageDown 1
         hFlush stdout
         clientLoop sock user chnl else
         do
-            -- threadDelay 1000000
             cursorUp 2
-            -- threadDelay 1000000
             hFlush stdout
-            -- threadDelay 1000000
             clearFromCursorToLineEnd
             hFlush stdout
-            -- threadDelay 1000000
             setSGR [SetColor Foreground Dull Cyan]
             putStr (user ++ ": " ++ input)
             hFlush stdout
@@ -132,7 +123,7 @@ clientLoop sock user chnl = do
                     writeDivider (Just chnlName)
                     clientLoop sock user chnl
 
-
+-- Quality of life function for parsing IP
 parseIP :: String -> String
 parseIP ip = case ip of
     -- "" -> "192.168.1.190"
@@ -140,6 +131,7 @@ parseIP ip = case ip of
     "" -> "128.91.165.228"
     s -> s
 
+-- Prints the divider between messages and input
 writeDivider :: Maybe String -> IO ()
 writeDivider channel = 
     do
@@ -157,10 +149,12 @@ writeDivider channel =
     setSGR [SetConsoleIntensity NormalIntensity]
     hFlush stdout
 
+-- Data type representing a reply from the server
 data Reply = RPublic String
              | RWhisper String
              | RServer String
 
+-- Parses a reply from the server into a Reply
 parseServerReply :: String -> Reply
 parseServerReply msg = 
     let splits@(mode : str : xs) = splitOn delim msg in
@@ -172,6 +166,7 @@ parseServerReply msg =
             _   -> RPublic str
     else RPublic msg
 
+-- Correctly formats a reply from the server
 writeReply :: Reply -> IO ()
 writeReply reply = case reply of
     RPublic str -> do
@@ -187,7 +182,8 @@ writeReply reply = case reply of
         putStrLn str
         setSGR [SetColor Foreground Dull White]
 
-
+-- Loop that runs on a seperate thread
+-- to read messages sent from the server
 readLoop :: Handle -> MVar String -> IO ()
 readLoop sock chnl = do
     isDone <- hIsEOF sock
@@ -206,6 +202,7 @@ readLoop sock chnl = do
         writeDivider (Just chnlName)
         readLoop sock chnl
 
+-- Prints a message written as the server
 printServerNotification :: String -> IO ()
 printServerNotification str = do
     setSGR [SetColor Foreground Dull Green]
@@ -214,6 +211,7 @@ printServerNotification str = do
     setSGR [SetColor Foreground Dull White]
     hFlush stdout
 
+-- Prints a prompt for user input
 printPrompt :: String -> IO ()
 printPrompt str = do
     setSGR [SetColor Foreground Dull Yellow]
@@ -221,6 +219,7 @@ printPrompt str = do
     setSGR [SetColor Foreground Dull White]
     hFlush stdout
 
+-- Prints the welcome sequence
 printWelcomeMessage :: String -> IO ()
 printWelcomeMessage user = do
     printServerNotification ("hey " ++ user ++ " welcome to Shlλck!")
